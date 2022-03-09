@@ -1,2 +1,1 @@
-# Generating Speech from Transcripts
-## 02466 - Project work
+# 02466 - Project work: Generating Speech from Transcripts
