@@ -1,1 +1,2 @@
-# Generating Speech from Transcripts <small>02466 - Project work</small>
+# Generating Speech from Transcripts
+## 02466 - Project work
