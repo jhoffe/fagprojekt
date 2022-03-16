@@ -1,6 +1,6 @@
 #!/bin/sh
 module load scipy/1.6.3-python-3.9.6
-python3 -m venv fagprojekt-venv
+python3 -m venv fagprojekt-env
 
 source fagprojekt-env/bin/activate
 
