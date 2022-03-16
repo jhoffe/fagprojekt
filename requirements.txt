@@ -1,3 +1,8 @@
 numpy
 tqdm
+scipy
+librosa
+unidecode
+inflect
+librosa
 tensorboard>=1.14
