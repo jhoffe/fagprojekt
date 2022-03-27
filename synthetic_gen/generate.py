@@ -94,5 +94,3 @@ for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
         f = open(txt_filepath, "w")
         f.write(strings[0])
         f.close()
-
-    print(die)
