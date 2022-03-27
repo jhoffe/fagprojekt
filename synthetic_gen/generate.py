@@ -70,16 +70,19 @@ def prepare_text_samples(data, max_sentence_length=10):
     # mel, _, _ = tacotron2.infer(sequences, lengths)
     # return waveglow.infer(mel)
 
+@torch.no_grad()
+def generate_audio_sample(sequences, lengths):
+    mel, _, _ = tacotron2.infer(sequences[:CHUNK_SIZE], lengths[:CHUNK_SIZE])
+    return waveglow.infer(mel)
 
-CHUNK_SIZE = 100
+CHUNK_SIZE = 1000
 
 for chunk_idx in tqdm(range(len(librispeech) // CHUNK_SIZE), desc="Processing chunks"):
     from_idx = chunk_idx * CHUNK_SIZE
     to_idx = (chunk_idx + 1) * CHUNK_SIZE
     chunk = [sample for idx, sample in enumerate(librispeech) if from_idx <= idx < to_idx]
     sequences, lengths, strings = prepare_text_samples(chunk)
-    mel, _, _ = tacotron2.infer(sequences[:CHUNK_SIZE], lengths[:CHUNK_SIZE])
-    audio_samples = waveglow.infer(mel)
+    audio_samples = generate_audio_sample(sequences, lengths)
 
     for idx, audio_sample in enumerate(audio_samples):
         f_idx = chunk_idx * CHUNK_SIZE + idx
