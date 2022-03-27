@@ -80,20 +80,19 @@ def generate_audio_sample(sequences, lengths):
 
 for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
     sequences, lengths, strings = prepare_text_samples([librispeech[idx]])
-    print(sequences, lengths, strings)
-    audio_samples = generate_audio_sample(sequences, lengths)
+    for si in range(len(strings)):
+        audio_samples = generate_audio_sample(sequences[si], lengths[si])
 
-    f_idx = idx
-    filename = "{}.wav".format(f_idx)
-    txt_filename = "{}.txt".format(f_idx)
-    filepath = "{}/{}".format(OUTPUT_PATH, filename)
-    txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
+        filename = "{}_{}.wav".format(idx, si)
+        txt_filename = "{}.txt".format(idx, si)
+        filepath = "{}/{}".format(OUTPUT_PATH, filename)
+        txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
-    # If file has already been generated, then there is no reason to generate again
-    if not os.path.exists(filepath):
-        torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE)
+        # If file has already been generated, then there is no reason to generate again
+        if not os.path.exists(filepath):
+            torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE)
 
-    if not os.path.exists(txt_filepath):
-        f = open(txt_filepath, "w")
-        f.write(strings[0])
-        f.close()
+        if not os.path.exists(txt_filepath):
+            f = open(txt_filepath, "w")
+            f.write(strings[0])
+            f.close()
