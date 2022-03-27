@@ -7,7 +7,7 @@ from tqdm import tqdm
 warnings.simplefilter('ignore')
 
 TORCH_MODELS_PATH = "{}/data/models".format(os.getcwd())
-LS_SPEECH_PATH = "{}/data/librispeech".format(os.getcwd())
+LS_PATH = "{}/data/librispeech".format(os.getcwd())
 OUTPUT_PATH = "{}/data/synthetic_speech".format(os.getcwd())
 RATE = 22050
 
@@ -15,8 +15,8 @@ RATE = 22050
 if not os.path.exists(TORCH_MODELS_PATH):
     os.makedirs(TORCH_MODELS_PATH)
 
-if not os.path.exists(LS_SPEECH_PATH):
-    os.makedirs(LS_SPEECH_PATH)
+if not os.path.exists(LS_PATH):
+    os.makedirs(LS_PATH)
 
 if not os.path.exists(OUTPUT_PATH):
     os.makedirs(OUTPUT_PATH)
@@ -36,7 +36,10 @@ waveglow = waveglow.remove_weightnorm(waveglow)
 waveglow = waveglow.to('cuda')
 waveglow.eval()
 
-librispeech = torchaudio.datasets.LIBRISPEECH(root=LS_SPEECH_PATH, url="dev-clean", download=True)
+librispeech_clean = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url="test-clean", download=True)
+librispeech_other = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url="test-other", download=True)
+
+librispeech = librispeech_clean + librispeech_other
 
 utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
 
