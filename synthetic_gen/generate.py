@@ -72,30 +72,24 @@ def prepare_text_samples(data, max_sentence_length=10):
 
 @torch.no_grad()
 def generate_audio_sample(sequences, lengths):
-    mel, _, _ = tacotron2.infer(sequences[:CHUNK_SIZE], lengths[:CHUNK_SIZE])
+    mel, _, _ = tacotron2.infer(sequences, lengths)
     return waveglow.infer(mel)
 
-CHUNK_SIZE = 1000
-
-for chunk_idx in tqdm(range(len(librispeech) // CHUNK_SIZE), desc="Processing chunks"):
-    from_idx = chunk_idx * CHUNK_SIZE
-    to_idx = (chunk_idx + 1) * CHUNK_SIZE
-    chunk = [sample for idx, sample in enumerate(librispeech) if from_idx <= idx < to_idx]
-    sequences, lengths, strings = prepare_text_samples(chunk)
+for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
+    sequences, lengths, strings = prepare_text_samples([librispeech[idx]])
     audio_samples = generate_audio_sample(sequences, lengths)
 
-    for idx, audio_sample in enumerate(audio_samples):
-        f_idx = chunk_idx * CHUNK_SIZE + idx
-        filename = "{}.wav".format(f_idx)
-        txt_filename = "{}.txt".format(f_idx)
-        filepath = "{}/{}".format(OUTPUT_PATH, filename)
-        txt_filepath = "{}/{}".format(OUTPUT_PATH, filename)
+    f_idx = idx
+    filename = "{}.wav".format(f_idx)
+    txt_filename = "{}.txt".format(f_idx)
+    filepath = "{}/{}".format(OUTPUT_PATH, filename)
+    txt_filepath = "{}/{}".format(OUTPUT_PATH, filename)
 
-        # If file has already been generated, then there is no reason to generate again
-        if not os.path.exists(filepath):
-            torchaudio.save(filepath=filepath, src=audio_sample.cpu(), sample_rate=RATE)
+    # If file has already been generated, then there is no reason to generate again
+    if not os.path.exists(filepath):
+        torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE)
 
-        if not os.path.exists(filepath):
-            f = open(filepath, "w")
-            f.write(strings[idx])
-            f.close()
+    if not os.path.exists(txt_filepath):
+        f = open(txt_filepath, "w")
+        f.write(strings[idx])
+        f.close()
