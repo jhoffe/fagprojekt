@@ -64,7 +64,7 @@ def prepare_text_samples(data, max_sentence_length=10):
             text_samples.append(s)
     print(text_samples)
 
-    return utils.prepare_input_sequence(text_samples), text_samples
+    return *utils.prepare_input_sequence(text_samples), text_samples
 
     
     # mel, _, _ = tacotron2.infer(sequences, lengths)
