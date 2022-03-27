@@ -6,9 +6,10 @@ from tqdm import tqdm
 
 warnings.simplefilter('ignore')
 
+LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 TORCH_MODELS_PATH = "{}/data/models".format(os.getcwd())
 LS_PATH = "{}/data/librispeech".format(os.getcwd())
-OUTPUT_PATH = "{}/data/synthetic_speech".format(os.getcwd())
+OUTPUT_PATH = "{}/data/synthetic_speech/{}".format(os.getcwd(), LS_DATASET_TYPE)
 RATE = 22050
 
 # Create needed directories
@@ -25,6 +26,7 @@ if not os.path.exists(OUTPUT_PATH):
 torch.hub.set_dir(TORCH_MODELS_PATH)
 torch.cuda.empty_cache()
 
+
 # Create the models
 tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
 tacotron2 = tacotron2.to('cuda')
@@ -35,11 +37,6 @@ waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_wavegl
 waveglow = waveglow.remove_weightnorm(waveglow)
 waveglow = waveglow.to('cuda')
 waveglow.eval()
-
-librispeech_clean = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url="test-clean", download=True)
-librispeech_other = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url="test-other", download=True)
-
-librispeech = librispeech_clean + librispeech_other
 
 utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
 
@@ -70,28 +67,29 @@ def prepare_text_samples(data, max_sentence_length=10):
         for s in ss:
             text_samples.append(s)
 
-    return *utils.prepare_input_sequence(text_samples), text_samples
-
-    
-    # mel, _, _ = tacotron2.infer(sequences, lengths)
-    # return waveglow.infer(mel)
+    return text_samples
 
 @torch.no_grad()
 def generate_audio_sample(sequences, lengths):
     mel, _, _ = tacotron2.infer(sequences, lengths)
     return waveglow.infer(mel)
 
-for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
-    sequences, lengths, strings = prepare_text_samples([librispeech[idx]])
-    for si in range(len(strings)):
-        new_sequences = torch.tensor([sequences[si].tolist()], device="cuda")
-        new_lengths = torch.tensor([lengths[si].tolist()], device="cuda")
-        audio_samples = generate_audio_sample(new_sequences, new_lengths)
+def generate_audio_samples(dataset):
+    text_samples = prepare_text_samples(dataset)
 
-        filename = "{}_{}.wav".format(idx, si)
-        txt_filename = "{}_{}.txt".format(idx, si)
+    i = 0
+    for text_sample in tqdm(text_samples, desc="Processing samples"):
+        filename = "{}.wav".format(i)
+        txt_filename = "{}.txt".format(i)
         filepath = "{}/{}".format(OUTPUT_PATH, filename)
         txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
+
+        if os.path.exists(filepath) and os.path.exists(txt_filepath):
+            continue
+
+        sequences, lengths = utils.prepare_input_sequence([text_sample])
+
+        audio_samples = generate_audio_sample(sequences, lengths)
 
         # If file has already been generated, then there is no reason to generate again
         if not os.path.exists(filepath):
@@ -99,5 +97,10 @@ for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
 
         if not os.path.exists(txt_filepath):
             f = open(txt_filepath, "w")
-            f.write(strings[si])
+            f.write(text_sample)
             f.close()
+        i += 1
+
+librispeech = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=LS_DATASET_TYPE, download=True)
+
+generate_audio_samples(librispeech)
