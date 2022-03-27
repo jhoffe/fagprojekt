@@ -27,6 +27,7 @@ torch.hub.set_dir(TORCH_MODELS_PATH)
 # Create the models
 tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
 tacotron2 = tacotron2.to('cuda')
+tacotron2.decoder.max_decoder_steps = 2000
 tacotron2.eval()
 
 waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
@@ -38,21 +39,60 @@ librispeech = torchaudio.datasets.LIBRISPEECH(root=LS_SPEECH_PATH, url="dev-clea
 
 utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
 
+@torch.no_grad()
+def split_to_sentence_length(sentence, max_sentence_length=10):
+    words = sentence.split()
+
+    split_sentences = []
+
+    for i in range(len(words) // max_sentence_length):
+        split_sentences.append(" ".join(words[i * max_sentence_length:i * max_sentence_length + 10]))
+
+    return split_sentences
+
 
 @torch.no_grad()
-def generate_audio_sample(data):
-    text = data[2]
-    sequences, lengths = utils.prepare_input_sequence([text])
-    mel, _, _ = tacotron2.infer(sequences, lengths)
-    return waveglow.infer(mel)
+def prepare_text_samples(data, max_sentence_length=10):
+    text_samples = []
+
+    for sample in data:
+        text = sample[2]
+
+        ss = split_to_sentence_length(text, max_sentence_length)
+
+        for s in ss:
+            text_samples.append(s)
+    print(text_samples)
+
+    return utils.prepare_input_sequence(text_samples), text_samples
+
+    
+    # mel, _, _ = tacotron2.infer(sequences, lengths)
+    # return waveglow.infer(mel)
 
 
-generator_bar = tqdm(librispeech, desc="Generating wav files")
-for sentence in generator_bar:
-    filename = "uid{}_s{}_c{}.wav".format(sentence[5], sentence[3], sentence[4])
-    filepath = "{}/{}".format(OUTPUT_PATH, filename)
+CHUNK_SIZE = 100
 
-    # If file has already been generated, then there is no reason to generate again
-    if not os.path.exists(filepath):
-        audio = generate_audio_sample(sentence)
-        torchaudio.save(filepath=filepath, src=audio.cpu(), sample_rate=RATE)
+for chunk_idx in tqdm(range(len(librispeech) // CHUNK_SIZE), desc="Processing chunks"):
+    from_idx = chunk_idx * CHUNK_SIZE
+    to_idx = (chunk_idx + 1) * CHUNK_SIZE
+    chunk = [sample for idx, sample in enumerate(librispeech) if from_idx <= idx < to_idx]
+    sequences, lengths, strings = prepare_text_samples(chunk)
+    mel, _, _ = tacotron2.infer(sequences[:CHUNK_SIZE], lengths[:CHUNK_SIZE])
+    audio_samples = waveglow.infer(mel)
+
+    for idx, audio_sample in enumerate(audio_samples):
+        f_idx = chunk_idx * CHUNK_SIZE + idx
+        filename = "{}.wav".format(f_idx)
+        txt_filename = "{}.txt".format(f_idx)
+        filepath = "{}/{}".format(OUTPUT_PATH, filename)
+        txt_filepath = "{}/{}".format(OUTPUT_PATH, filename)
+
+        # If file has already been generated, then there is no reason to generate again
+        if not os.path.exists(filepath):
+            torchaudio.save(filepath=filepath, src=audio_sample.cpu(), sample_rate=RATE)
+
+        if not os.path.exists(filepath):
+            f = open(filepath, "w")
+            f.write(strings[idx])
+            f.close()
