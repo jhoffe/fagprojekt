@@ -77,13 +77,14 @@ def generate_audio_sample(sequences, lengths):
 
 for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
     sequences, lengths, strings = prepare_text_samples([librispeech[idx]])
+    print(sequences, lengths, strings)
     audio_samples = generate_audio_sample(sequences, lengths)
 
     f_idx = idx
     filename = "{}.wav".format(f_idx)
     txt_filename = "{}.txt".format(f_idx)
     filepath = "{}/{}".format(OUTPUT_PATH, filename)
-    txt_filepath = "{}/{}".format(OUTPUT_PATH, filename)
+    txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
     # If file has already been generated, then there is no reason to generate again
     if not os.path.exists(filepath):
@@ -91,5 +92,7 @@ for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
 
     if not os.path.exists(txt_filepath):
         f = open(txt_filepath, "w")
-        f.write(strings[idx])
+        f.write(strings[0])
         f.close()
+
+    print(die)
