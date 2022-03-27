@@ -49,6 +49,9 @@ def split_to_sentence_length(sentence, max_sentence_length=10):
 
     split_sentences = []
 
+    if len(words) // max_sentence_length == 0:
+        return [sentence]
+
     for i in range(len(words) // max_sentence_length):
         split_sentences.append(" ".join(words[i * max_sentence_length:i * max_sentence_length + 10]))
 
@@ -81,10 +84,12 @@ def generate_audio_sample(sequences, lengths):
 for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
     sequences, lengths, strings = prepare_text_samples([librispeech[idx]])
     for si in range(len(strings)):
-        audio_samples = generate_audio_sample(sequences[si], lengths[si])
+        new_sequences = torch.tensor([sequences[si].tolist()], device="cuda")
+        new_lengths = torch.tensor([lengths[si].tolist()], device="cuda")
+        audio_samples = generate_audio_sample(new_sequences, new_lengths)
 
         filename = "{}_{}.wav".format(idx, si)
-        txt_filename = "{}.txt".format(idx, si)
+        txt_filename = "{}_{}.txt".format(idx, si)
         filepath = "{}/{}".format(OUTPUT_PATH, filename)
         txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
@@ -94,5 +99,5 @@ for idx in tqdm(range(len(librispeech)), desc="Processing samples"):
 
         if not os.path.exists(txt_filepath):
             f = open(txt_filepath, "w")
-            f.write(strings[0])
+            f.write(strings[si])
             f.close()
