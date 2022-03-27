@@ -4,10 +4,13 @@
 #BSUB -e synthetic_generate_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -n 1
-#BSUB -R "rusage[mem=16G]"
+#BSUB -n 8
+#BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 24
+#BSUB -W 24:00
+#BSUB -u s204071@student.dtu.dk
+#BSUB -B
+#BSUB -N
 # end of BSUB options
 
 # load a scipy module
