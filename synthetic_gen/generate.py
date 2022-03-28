@@ -30,7 +30,7 @@ torch.cuda.empty_cache()
 # Create the models
 tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
 tacotron2 = tacotron2.to('cuda')
-tacotron2.decoder.max_decoder_steps = 2000
+tacotron2.decoder.max_decoder_steps = 10000
 tacotron2.eval()
 
 waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
@@ -41,7 +41,7 @@ waveglow.eval()
 utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
 
 @torch.no_grad()
-def split_to_sentence_length(sentence, max_sentence_length=10):
+def split_to_sentence_length(sentence, max_sentence_length=1000):
     words = sentence.split()
 
     split_sentences = []
@@ -56,7 +56,7 @@ def split_to_sentence_length(sentence, max_sentence_length=10):
 
 
 @torch.no_grad()
-def prepare_text_samples(data, max_sentence_length=10):
+def prepare_text_samples(data, max_sentence_length=1000):
     text_samples = []
 
     for sample in data:
