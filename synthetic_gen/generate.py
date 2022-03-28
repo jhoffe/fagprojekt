@@ -4,7 +4,8 @@ import warnings
 import os
 from tqdm import tqdm
 
-warnings.simplefilter('ignore')
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 TORCH_MODELS_PATH = "{}/data/models".format(os.getcwd())
@@ -84,8 +85,8 @@ def generate_audio_samples(dataset):
         filepath = "{}/{}".format(OUTPUT_PATH, filename)
         txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
-        if os.path.exists(filepath) and os.path.exists(txt_filepath):
-            continue
+        # if os.path.exists(filepath) and os.path.exists(txt_filepath):
+        #     continue
 
         sequences, lengths = utils.prepare_input_sequence([text_sample])
 
