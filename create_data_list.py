@@ -16,7 +16,7 @@ for dataset in datasets:
     filtered_full_paths = []
 
     for path in tqdm(full_paths):
-        data = torchaudio.load(filepath=path)
+        data = torchaudio.load(filepath=path + ".wav")
 
         num_frames = data[0].size()[0]
 
