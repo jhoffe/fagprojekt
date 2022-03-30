@@ -1,9 +1,11 @@
 import os
 import torchaudio
+from tqdm import tqdm
 
 datasets = os.listdir('./data/synthetic_speech/')
 
 LIMIT = 18
+SAMPLE_RATE = 22050
 
 for dataset in datasets:
     files = os.listdir("./data/synthetic_speech/{}/".format(dataset))
@@ -13,12 +15,13 @@ for dataset in datasets:
              in files]))
     filtered_full_paths = []
 
-    for path in full_paths:
-        with open(path + ".wav") as f:
-            metadata = torchaudio.info(f.read())
+    for path in tqdm(full_paths):
+        data = torchaudio.load(filepath=path)
 
-            if metadata.num_frames/metadata.sample_rate < LIMIT:
-                filtered_full_paths.append(path)
+        num_frames = data[0].size()[0]
+
+        if num_frames/SAMPLE_RATE < LIMIT:
+            filtered_full_paths.append(path)
 
     files_string = "\n".join(filtered_full_paths)
 
