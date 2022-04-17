@@ -11,7 +11,7 @@ this task using te default parameters from torchaudio.
 
 INPUT_RATE = 16000
 OUTPUT_RATE = 22050
-training_sets = ["train-clean-100", "train-clean-360", "train-other-500"]
+training_sets = ["test-clean"] #["train-clean-100", "train-clean-360", "train-other-500"]
 
 LS_PATH = "{}/data/librispeech".format(os.getcwd()) # skal måske fixes
 
@@ -28,19 +28,16 @@ for training_set in training_sets:
     if not os.path.exists(OUTPUT_PATH):
         os.makedirs(OUTPUT_PATH)
 
-    data = './data/{}/'.format(training_set) # skal fixes
-    datasets = os.listdir(data)
+    dataset = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=training_set, download=True)
 
-    for dataset in datasets:
-        files = os.listdir("./data/synthetic_speech/{}/".format(dataset)) # skal fixes
+    for sample in tqdm(dataset, desc="Upsampling files for {}".format(training_set)):
+        upsampled = audio_upsample(sample[0], input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
 
-        for file in tqdm(files, desc="Upsampling files for {}".format(dataset)):
-            upsampled = audio_upsample(file, input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
-            filename = "{}.wav".format(os.path.basename(file.name))
-            filepath = "{}/{}".format(OUTPUT_PATH, filename)
+        filename = "s{}_c{}_u{}.wav".format(sample[3], sample[4], sample[5])
+        filepath = "{}/{}".format(OUTPUT_PATH, filename)
 
-            if not os.path.exists(filepath):
-                torchaudio.save(filepath=filepath, src=upsampled.cpu(), sample_rate=OUTPUT_RATE)
+        if not os.path.exists(filepath):
+            torchaudio.save(filepath=filepath, src=upsampled, sample_rate=OUTPUT_RATE)
 
 
 
