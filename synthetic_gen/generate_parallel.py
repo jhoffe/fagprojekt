@@ -4,6 +4,7 @@ import torchaudio
 import warnings
 import os
 import pandas as pd
+from filelock import FileLock
 
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 HPC_PATH = os.getenv("HPC_PATH") if "HPC_PATH" in os.environ else os.getcwd()
@@ -24,7 +25,10 @@ class BatchInferModel:
         self.utils = self._init_utils()
 
     def _init_tacotron(self):
-        tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
+        lock = FileLock("tacotron2.lock")
+
+        with lock:
+            tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
         tacotron2 = tacotron2.to('cuda')
         tacotron2.decoder.max_decoder_steps = 10000
         tacotron2.eval()
@@ -32,7 +36,9 @@ class BatchInferModel:
         return tacotron2
 
     def _init_waveglow(self):
-        waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
+        lock = FileLock("waveglow.lock")
+        with lock:
+            waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
         waveglow = waveglow.remove_weightnorm(waveglow)
         waveglow = waveglow.to('cuda')
         waveglow.eval()
@@ -40,7 +46,11 @@ class BatchInferModel:
         return waveglow
 
     def _init_utils(self):
-        return torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
+        lock = FileLock("utils.lock")
+        with lock:
+            utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
+
+        return utils
 
     @torch.no_grad()
     def __call__(self, batch: pd.DataFrame):
