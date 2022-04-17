@@ -19,4 +19,4 @@ module load scipy/1.6.3-python-3.9.6
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-CPU_CORES=32 python3 -m upsampler.upsample
+CPU_CORES=24 python3 -m upsampler.upsample
