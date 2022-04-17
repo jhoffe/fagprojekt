@@ -4,10 +4,10 @@
 #BSUB -e synthetic_generate_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=4:mode=exclusive_process"
-#BSUB -n 16
+#BSUB -n 8
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 08:00
+#BSUB -W 01:00
 #BSUB -u s204071@student.dtu.dk
 #BSUB -B
 #BSUB -N
