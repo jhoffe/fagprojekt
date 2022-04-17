@@ -8,9 +8,9 @@ import pandas as pd
 
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 HPC_PATH = os.getenv("HPC_PATH") if "HPC_PATH" in os.environ else os.getcwd()
-TORCH_MODELS_PATH = "{}/data/models".format(os.getcwd())
-LS_PATH = "{}/data/librispeech".format(os.getcwd())
-OUTPUT_PATH = "{}/data/synthetic_speech/{}".format(os.getcwd(), LS_DATASET_TYPE)
+TORCH_MODELS_PATH = "{}/data/models".format(HPC_PATH)
+LS_PATH = "{}/data/librispeech".format(HPC_PATH)
+OUTPUT_PATH = "{}/data/synthetic_speech/{}".format(HPC_PATH, LS_DATASET_TYPE)
 RATE = 22050
 
 NUM_GPUS = torch.cuda.device_count()
