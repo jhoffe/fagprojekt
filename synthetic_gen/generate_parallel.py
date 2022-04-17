@@ -51,7 +51,7 @@ class InferModel(object):
     def _init_utils(self):
         lock = FileLock("utils.lock")
         with lock:
-            utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
+            utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils', force_reload=True)
 
         return utils
 
