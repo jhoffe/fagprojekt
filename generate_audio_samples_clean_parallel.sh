@@ -3,7 +3,7 @@
 #BSUB -o synthetic_generate_%J.out
 #BSUB -e synthetic_generate_%J.err
 #BSUB -q gpua100
-#BSUB -gpu "num=3:mode=exclusive_process"
+#BSUB -gpu "num=2:mode=exclusive_process"
 #BSUB -n 8
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
