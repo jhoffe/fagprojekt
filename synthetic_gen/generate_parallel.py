@@ -5,7 +5,6 @@ import warnings
 import os
 import pandas as pd
 
-
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 HPC_PATH = os.getenv("HPC_PATH") if "HPC_PATH" in os.environ else os.getcwd()
 TORCH_MODELS_PATH = "{}/data/models".format(HPC_PATH)
@@ -15,9 +14,10 @@ RATE = 22050
 
 NUM_GPUS = torch.cuda.device_count()
 
+
 class BatchInferModel:
     def __init__(self):
-        #warnings.simplefilter("ignore")
+        # warnings.simplefilter("ignore")
 
         self.waveglow = self._init_waveglow()
         self.tacotron = self._init_tacotron()
@@ -50,15 +50,12 @@ class BatchInferModel:
         mels, _, _ = self.tacotron.infer(sequences, lengths)
         waveforms = self.waveglow.infer(mels)
 
-        batch["synthetic_waveform"] = waveforms.cpu()
-        batch["audio_filename"] = list(
-            map(lambda utterance_id: f"u{utterance_id}.wav", batch["utterance_id"].tolist())
-        )
-        batch["txt_filename"] = list(
-            map(lambda utterance_id: f"u{utterance_id}.txt", batch["utterance_id"].tolist())
-        )
+        new_batch = []
 
-        return batch
+        for (waveform, utterance_id, transcript) in zip(waveforms.cpu(), batch["utterance_id"].tolist(), transcripts):
+            new_batch.append((waveform, f"u{utterance_id}.wav", transcript, f"u{utterance_id}.txt"))
+
+        return new_batch
 
 
 def tuple_to_dict(tuple):
@@ -67,23 +64,25 @@ def tuple_to_dict(tuple):
         "utterance_id": tuple[5]
     }
 
+
 class BatchWriteModel:
     def __init__(self):
-        #warnings.simplefilter("ignore")
+        # warnings.simplefilter("ignore")
         self.test = None
 
-    def __call__(self, batch: pd.DataFrame):
-        for index, row in batch.iterrows():
-            filepath = "{}/{}".format(OUTPUT_PATH, row["audio_filename"])
-            txt_filepath = "{}/{}".format(OUTPUT_PATH, row["txt_filename"])
+    def __call__(self, batch):
+        for item in batch:
+            filepath = "{}/{}".format(OUTPUT_PATH, item[1])
+            txt_filepath = "{}/{}".format(OUTPUT_PATH, item[3])
 
-            torchaudio.save(filepath=filepath, src=row["synthetic_waveform"], sample_rate=RATE)
+            torchaudio.save(filepath=filepath, src=item[0].reshape((1, -1)), sample_rate=RATE)
 
             f = open(txt_filepath, "w")
-            f.write(row["transcript"])
+            f.write(item[2])
             f.close()
 
         return batch
+
 
 if __name__ == '__main__':
     # Create needed directories
@@ -108,8 +107,5 @@ if __name__ == '__main__':
         BatchInferModel, compute=ray.data.ActorPoolStrategy(NUM_GPUS, NUM_GPUS),
         batch_size=16, num_gpus=1
     )
-    ds = ds.map_batches(BatchWriteModel, compute=ray.data.ActorPoolStrategy(2, 16),
-        batch_size=16, num_gpus=0)
-
-
-
+    ds = ds.map_batches(BatchWriteModel, compute=ray.data.ActorPoolStrategy(2, 2),
+                        batch_size=16, num_gpus=0)
