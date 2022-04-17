@@ -112,3 +112,5 @@ datasets/
 __MACOSX/
 
 fagprojekt-env/
+
+*.lock
