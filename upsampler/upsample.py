@@ -18,14 +18,14 @@ def audio_upsample(audio, input_rate, output_rate):
 
 def upsample(sample):
     name = "s{}_c{}_u{}".format(sample[3], sample[4], sample[5])
-    filename = f"{name}.flac"
+    filename = f"{name}.wav"
     filepath = "{}/{}".format(OUTPUT_PATH, filename)
     txt_filename = f"{name}.txt"
     txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
     if not os.path.exists(filepath):
         upsampled = audio_upsample(sample[0], input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
-        torchaudio.save(filepath=filepath, src=upsampled, sample_rate=OUTPUT_RATE, format="flac")
+        torchaudio.save(filepath=filepath, src=upsampled, sample_rate=OUTPUT_RATE)
 
     if not os.path.exists(txt_filepath):
         f = open(txt_filepath, "w")
@@ -35,9 +35,9 @@ def upsample(sample):
 if __name__ == '__main__':
     INPUT_RATE = 16000
     OUTPUT_RATE = 22050
-    training_sets = ["test-clean", "test-other", "train-clean-100", "train-clean-360", "train-other-500"]
+    training_sets = ["test-clean"] #["test-clean", "test-other", "train-clean-100", "train-clean-360", "train-other-500"]
 
-    LS_PATH = "{}/data/librispeech".format(os.getcwd())
+    LS_PATH = "{}/data/librispeech".format(os.getcwd()) # skal måske fixes
 
     if not os.path.exists(LS_PATH):
         os.makedirs(LS_PATH)
