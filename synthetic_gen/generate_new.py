@@ -123,7 +123,7 @@ if __name__ == '__main__':
     lock = FileLock(f"librispeech.{args['dataset']}.lock")
     with lock:
         ds = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=args["dataset"], download=True)
-    ds = list(map(tuple_to_dict, ds))[args["idxstart"]:args["idxend"]]
+    ds = list(map(tuple_to_dict, ds))
 
     infer_model = InferModel(batch_size=args["batchsize"], rank=0, output_path=OUTPUT_PATH)
 
