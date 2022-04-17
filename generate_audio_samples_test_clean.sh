@@ -1,7 +1,7 @@
 #!/bin/sh
-#BSUB -J synthetic_generate
-#BSUB -o synthetic_generate_%J.out
-#BSUB -e synthetic_generate_%J.err
+#BSUB -J synthetic_generate_test_clean
+#BSUB -o synthetic_generate_test_clean_%J.out
+#BSUB -e synthetic_generate_test_clean_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 8
@@ -24,4 +24,4 @@ module load cuda/11.3
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-python3 -m synthetic_gen.generate_new --dataset "test-clean" --batch_size 16
+LS_DATASET_TYPE="test-clean" python3 -m synthetic_gen.generate

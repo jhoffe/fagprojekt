@@ -1,7 +1,7 @@
 #!/bin/sh
-#BSUB -J synthetic_generate
-#BSUB -o synthetic_generate_%J.out
-#BSUB -e synthetic_generate_%J.err
+#BSUB -J synthetic_generate_test_other
+#BSUB -o synthetic_generate_test_other_%J.out
+#BSUB -e synthetic_generate_test_other_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 8
