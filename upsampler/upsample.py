@@ -28,14 +28,14 @@ def upsample(sample):
         torchaudio.save(filepath=filepath, src=upsampled, sample_rate=OUTPUT_RATE)
 
     if not os.path.exists(txt_filepath):
-        f = open(filepath, "w")
+        f = open(txt_filepath, "w")
         f.write(sample[2])
         f.close()
 
 if __name__ == '__main__':
     INPUT_RATE = 16000
     OUTPUT_RATE = 22050
-    training_sets = ["test-clean", "test-other", "train-clean-100", "train-clean-360", "train-other-500"]
+    training_sets = ["test-clean"] #["test-clean", "test-other", "train-clean-100", "train-clean-360", "train-other-500"]
 
     LS_PATH = "{}/data/librispeech".format(os.getcwd()) # skal måske fixes
 
