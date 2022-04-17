@@ -86,8 +86,8 @@ def generate_audio_samples(dataset):
 
     i = 0
     for text_sample in tqdm(text_samples, desc="Processing samples"):
-        filename = "{}.wav".format(i)
-        txt_filename = "{}.txt".format(i)
+        filename = "s{}_c{}_u{}.wav".format(text_sample[3], text_sample[4], text_sample[5])
+        txt_filename = "s{}_c{}_u{}.txt".format(text_sample[3], text_sample[4], text_sample[5])
         filepath = "{}/{}".format(OUTPUT_PATH, filename)
         txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
