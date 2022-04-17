@@ -2,10 +2,10 @@
 #BSUB -J authentic_upsampled
 #BSUB -o authentic_upsampled_%J.out
 #BSUB -e authentic_upsampled_%J.err
-#BSUB -n 32
-#BSUB -R "rusage[mem=2G]"
+#BSUB -n 24
+#BSUB -R "rusage[mem=1G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 00:05
+#BSUB -W 00:10
 #BSUB -u s204071@student.dtu.dk
 #BSUB -B
 #BSUB -N
