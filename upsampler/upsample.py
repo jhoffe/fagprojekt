@@ -17,13 +17,20 @@ def audio_upsample(audio, input_rate, output_rate):
     return upsample(audio)
 
 def upsample(sample):
-    upsampled = audio_upsample(sample[0], input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
-
-    filename = "s{}_c{}_u{}.wav".format(sample[3], sample[4], sample[5])
+    name = "s{}_c{}_u{}".format(sample[3], sample[4], sample[5])
+    filename = f"{name}.wav"
     filepath = "{}/{}".format(OUTPUT_PATH, filename)
+    txt_filename = f"{name}.txt"
+    txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
     if not os.path.exists(filepath):
+        upsampled = audio_upsample(sample[0], input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
         torchaudio.save(filepath=filepath, src=upsampled, sample_rate=OUTPUT_RATE)
+
+    if not os.path.exists(txt_filepath):
+        f = open(filepath, "w")
+        f.write(sample[2])
+        f.close()
 
 if __name__ == '__main__':
     INPUT_RATE = 16000

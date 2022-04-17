@@ -1,10 +1,11 @@
-import ray.data
+import os
+
+import pandas as pd
+import ray
 import torch
 import torchaudio
-import warnings
-import os
-import pandas as pd
 from filelock import FileLock
+from ray.data.dataset_pipeline import DatasetPipeline
 
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 HPC_PATH = os.getenv("HPC_PATH") if "HPC_PATH" in os.environ else os.getcwd()
@@ -15,8 +16,7 @@ RATE = 22050
 
 NUM_GPUS = torch.cuda.device_count()
 
-
-class BatchInferModel:
+class BatchInferModel(object):
     def __init__(self):
         # warnings.simplefilter("ignore")
 
@@ -75,7 +75,7 @@ def tuple_to_dict(tuple):
     }
 
 
-class BatchWriteModel:
+class BatchWriteModel(object):
     def __init__(self):
         # warnings.simplefilter("ignore")
         self.test = None
@@ -110,12 +110,10 @@ if __name__ == '__main__':
     torch.cuda.empty_cache()
 
     train_clean_100 = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=LS_DATASET_TYPE, download=True)
-    train_clean_100 = list(map(tuple_to_dict, train_clean_100))
+    train_clean_100 = list(map(tuple_to_dict, train_clean_100))[:4]
 
     ds = ray.data.from_items(train_clean_100)
     ds = ds.map_batches(
-        BatchInferModel, compute=ray.data.ActorPoolStrategy(NUM_GPUS, NUM_GPUS),
-        batch_size=16, num_gpus=1
+        BatchInferModel, compute=ray.data.ActorPoolStrategy(1, NUM_GPUS), batch_size=16, num_gpus=1
     )
-    ds = ds.map_batches(BatchWriteModel, compute=ray.data.ActorPoolStrategy(2, 2),
-                        batch_size=16, num_gpus=0)
+    ds.map_batches(BatchWriteModel, compute=ray.data.ActorPoolStrategy(2, 2), batch_size=16, num_gpus=0)
