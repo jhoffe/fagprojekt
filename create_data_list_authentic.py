@@ -19,12 +19,12 @@ for dataset in datasets:
     files = os.listdir("./data/authentic_speech_upsampled/{}/".format(dataset))
 
     full_paths = list(
-        set(["data/authentic_speech_upsampled/{}/".format(dataset) + filename.replace('.wav', '').replace('.txt', '') for filename
+        set(["data/authentic_speech_upsampled/{}/".format(dataset) + filename.replace('.flac', '').replace('.txt', '') for filename
              in files]))
     filtered_full_paths = []
 
     for path in tqdm(full_paths):
-        data = torchaudio.load(filepath=path + ".wav")
+        data = torchaudio.load(filepath=path + ".flac")
 
         num_frames = data[0].size()[0]
 

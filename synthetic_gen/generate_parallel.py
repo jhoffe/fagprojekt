@@ -5,7 +5,7 @@ import ray
 import torch
 import torchaudio
 from filelock import FileLock
-from ray.data.dataset_pipeline import DatasetPipeline
+import ray
 
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
 HPC_PATH = os.getenv("HPC_PATH") if "HPC_PATH" in os.environ else os.getcwd()
@@ -16,10 +16,12 @@ RATE = 22050
 
 NUM_GPUS = torch.cuda.device_count()
 
-class BatchInferModel(object):
-    def __init__(self):
+@ray.remote(num_gpus=1)
+class InferModel(object):
+    def __init__(self, rank: int):
         # warnings.simplefilter("ignore")
 
+        self.rank = rank
         self.waveglow = self._init_waveglow()
         self.tacotron = self._init_tacotron()
         self.utils = self._init_utils()
@@ -29,7 +31,7 @@ class BatchInferModel(object):
 
         with lock:
             tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
-            tacotron2 = tacotron2.to('cuda')
+            tacotron2 = tacotron2.to(torch.device(f"cuda:{self.rank}"))
             tacotron2.decoder.max_decoder_steps = 10000
             tacotron2.eval()
 
@@ -40,7 +42,7 @@ class BatchInferModel(object):
         with lock:
             waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
             waveglow = waveglow.remove_weightnorm(waveglow)
-            waveglow = waveglow.to('cuda')
+            waveglow = waveglow.to(torch.device(f"cuda:{self.rank}"))
             waveglow.eval()
 
         return waveglow
@@ -52,8 +54,16 @@ class BatchInferModel(object):
 
         return utils
 
+    def infer(self, shard: ray.data.Dataset) -> int:
+        write_model = BatchWriteModel()
+
+        for batch in shard.iter_batches(batch_size=2):
+            proc_batch = self.infer_batch(batch)
+            write_model.write(proc_batch)
+        return shard.count()
+
     @torch.no_grad()
-    def __call__(self, batch: pd.DataFrame):
+    def infer_batch(self, batch: pd.DataFrame):
         transcripts = batch["transcript"].tolist()
         sequences, lengths = self.utils.prepare_input_sequence(transcripts)
 
@@ -74,13 +84,12 @@ def tuple_to_dict(tuple):
         "utterance_id": tuple[5]
     }
 
-
 class BatchWriteModel(object):
     def __init__(self):
         # warnings.simplefilter("ignore")
         self.test = None
 
-    def __call__(self, batch):
+    def write(self, batch):
         for item in batch:
             filepath = "{}/{}".format(OUTPUT_PATH, item[1])
             txt_filepath = "{}/{}".format(OUTPUT_PATH, item[3])
@@ -90,8 +99,6 @@ class BatchWriteModel(object):
             f = open(txt_filepath, "w")
             f.write(item[2])
             f.close()
-
-        return batch
 
 
 if __name__ == '__main__':
@@ -110,10 +117,20 @@ if __name__ == '__main__':
     torch.cuda.empty_cache()
 
     train_clean_100 = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=LS_DATASET_TYPE, download=True)
-    train_clean_100 = list(map(tuple_to_dict, train_clean_100))[:4]
+    train_clean_100 = list(map(tuple_to_dict, train_clean_100))
 
+    ray.init()
+
+    # Create workers
+    gpu_workers = [InferModel.remote(i) for i in range(NUM_GPUS)]
+
+    # Create dataset
     ds = ray.data.from_items(train_clean_100)
-    ds = ds.map_batches(
-        BatchInferModel, compute=ray.data.ActorPoolStrategy(1, NUM_GPUS), batch_size=16, num_gpus=1
-    )
-    ds.map_batches(BatchWriteModel, compute=ray.data.ActorPoolStrategy(2, 2), batch_size=16, num_gpus=0)
+
+    # Shard the dataset
+    shards = ds.split(n=NUM_GPUS, locality_hints=gpu_workers)
+
+    ray.get([w.infer.remote(shard) for (w, shard) in zip(gpu_workers, shards)])
+
+
+
