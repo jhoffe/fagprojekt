@@ -3,6 +3,12 @@ import torchaudio
 import torchaudio.transforms as T
 from tqdm import tqdm
 
+"""
+The aim of this file is to resample our authentic audio from 16000 Hz to 22050 Hz such that
+the sample rate matches the one from WaveGlow. torchaudio.transforms.Resample is used for
+this task using te default parameters from torchaudio.
+"""
+
 INPUT_RATE = 16000
 OUTPUT_RATE = 22050
 training_sets = ["train-clean-100", "train-clean-360", "train-other-500"]
