@@ -4,6 +4,12 @@ import warnings
 import os
 from tqdm import tqdm
 
+"""
+The aim of this file is to generate audio with our text-to-speech pipeline. The models in use
+are TacoTron2 and WaveGlow, and the generated audio clips are stored alongside the text files 
+used to generate the audio. 
+"""
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
