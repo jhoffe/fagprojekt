@@ -29,9 +29,9 @@ class BatchInferModel:
 
         with lock:
             tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
-        tacotron2 = tacotron2.to('cuda')
-        tacotron2.decoder.max_decoder_steps = 10000
-        tacotron2.eval()
+            tacotron2 = tacotron2.to('cuda')
+            tacotron2.decoder.max_decoder_steps = 10000
+            tacotron2.eval()
 
         return tacotron2
 
@@ -39,9 +39,9 @@ class BatchInferModel:
         lock = FileLock("waveglow.lock")
         with lock:
             waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
-        waveglow = waveglow.remove_weightnorm(waveglow)
-        waveglow = waveglow.to('cuda')
-        waveglow.eval()
+            waveglow = waveglow.remove_weightnorm(waveglow)
+            waveglow = waveglow.to('cuda')
+            waveglow.eval()
 
         return waveglow
 
