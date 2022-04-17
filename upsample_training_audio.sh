@@ -2,7 +2,7 @@
 #BSUB -J authentic_upsampled
 #BSUB -o authentic_upsampled_%J.out
 #BSUB -e authentic_upsampled_%J.err
-#BSUB -n 8
+#BSUB -n 16
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 04:00
@@ -19,4 +19,4 @@ module load scipy/1.6.3-python-3.9.6
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-python3 -m upsampler.upsample
+CPU_CORES=16 python3 -m upsampler.upsample
