@@ -30,7 +30,7 @@ class InferModel(object):
         lock = FileLock("tacotron2.lock")
 
         with lock:
-            tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16', force_reload=True)
+            tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
             tacotron2 = tacotron2.to(torch.device(f"cuda:{self.rank}"))
             tacotron2.decoder.max_decoder_steps = 10000
             tacotron2.eval()
@@ -41,7 +41,7 @@ class InferModel(object):
         lock = FileLock("waveglow.lock")
         with lock:
             torch.cuda.empty_cache()
-            waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16', force_reload=True)
+            waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
             waveglow = waveglow.remove_weightnorm(waveglow)
             waveglow = waveglow.to(torch.device(f"cuda:{self.rank}"))
             waveglow.eval()
@@ -51,7 +51,7 @@ class InferModel(object):
     def _init_utils(self):
         lock = FileLock("utils.lock")
         with lock:
-            utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils', force_reload=True)
+            utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
 
         return utils
 
@@ -71,17 +71,14 @@ class InferModel(object):
         mels, _, _ = self.tacotron.infer(sequences, lengths)
         waveforms = self.waveglow.infer(mels)
 
-        new_batch = []
-
-        for (waveform, utterance_id, transcript) in zip(waveforms.cpu(), batch["utterance_id"].tolist(), transcripts):
-            new_batch.append((waveform, f"u{utterance_id}.wav", transcript, f"u{utterance_id}.txt"))
-
-        return new_batch
+        return list(zip(waveforms.cpu(), batch["speaker_id"].tolist(), batch["chapter_id"].tolist(), batch["utterance_id"].tolist()))
 
 
 def tuple_to_dict(tuple):
     return {
         "transcript": tuple[2],
+        "speaker_id": tuple[3],
+        "chapter_id": tuple[4],
         "utterance_id": tuple[5]
     }
 
@@ -91,14 +88,17 @@ class BatchWriteModel(object):
         self.test = None
 
     def write(self, batch):
-        for item in batch:
-            filepath = "{}/{}".format(OUTPUT_PATH, item[1])
-            txt_filepath = "{}/{}".format(OUTPUT_PATH, item[3])
+        for sample in batch:
+            name = "s{}_c{}_u{}".format(sample[2], sample[3], sample[4])
+            filename = f"{name}.flac"
+            filepath = "{}/{}".format(OUTPUT_PATH, filename)
+            txt_filename = f"{name}.txt"
+            txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
-            torchaudio.save(filepath=filepath, src=item[0].reshape((1, -1)), sample_rate=RATE)
+            torchaudio.save(filepath=filepath, src=sample[0].reshape((1, -1)), sample_rate=RATE, format="flac")
 
             f = open(txt_filepath, "w")
-            f.write(item[2])
+            f.write(sample[2])
             f.close()
 
 
