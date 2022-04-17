@@ -40,6 +40,7 @@ class InferModel(object):
     def _init_waveglow(self):
         lock = FileLock("waveglow.lock")
         with lock:
+            torch.cuda.empty_cache()
             waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
             waveglow = waveglow.remove_weightnorm(waveglow)
             waveglow = waveglow.to(torch.device(f"cuda:{self.rank}"))
@@ -113,8 +114,7 @@ if __name__ == '__main__':
         os.makedirs(OUTPUT_PATH)
 
     # Set another local directory to download the models
-    torch.hub.set_dir(TORCH_MODELS_PATH)
-    torch.cuda.empty_cache()
+    #torch.hub.set_dir(TORCH_MODELS_PATH)
 
     train_clean_100 = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=LS_DATASET_TYPE, download=True)
     train_clean_100 = list(map(tuple_to_dict, train_clean_100))
