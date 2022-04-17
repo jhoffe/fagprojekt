@@ -24,4 +24,4 @@ module load cuda/11.3
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-LS_DATASET_TYPE="test-clean" python3 -m synthetic_gen.generate_parallel
+LS_DATASET_TYPE="test-clean" HPC_PATH="/work3/s204071/fagprojekt" python3 -m synthetic_gen.generate_parallel

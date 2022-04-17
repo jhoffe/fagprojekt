@@ -7,6 +7,7 @@ import pandas as pd
 
 
 LS_DATASET_TYPE = os.getenv('LS_DATASET_TYPE')
+HPC_PATH = os.getenv("HPC_PATH") if "HPC_PATH" in os.environ else os.getcwd()
 TORCH_MODELS_PATH = "{}/data/models".format(os.getcwd())
 LS_PATH = "{}/data/librispeech".format(os.getcwd())
 OUTPUT_PATH = "{}/data/synthetic_speech/{}".format(os.getcwd(), LS_DATASET_TYPE)
