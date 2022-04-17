@@ -32,7 +32,7 @@ for training_set in training_sets:
     datasets = os.listdir(data)
 
     for dataset in datasets:
-        files = os.listdir("./data/synthetic_speech/{}/".format(dataset)) # skal fixes
+        files = os.listdir("./data/authentic_speech/{}/".format(dataset)) # skal fixes
 
         for file in tqdm(files, desc="Upsampling files for {}".format(dataset)):
             upsampled = audio_upsample(file, input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
