@@ -7,6 +7,7 @@ from asr.utils.training import batch_to_tensor, epochs, Logger
 from asr.utils.text import greedy_ctc
 from asr.utils.metrics import ErrorRateTracker, LossTracker
 from tqdm import tqdm
+import pandas as pd
 
 import numpy as np
 import torch
@@ -47,6 +48,9 @@ train_logger = Logger('Training', ctc_metric, wer_metric, cer_metric)
 val_logger = Logger('Validation', ctc_metric, wer_metric, cer_metric)
 test_logger = Logger('Test', ctc_metric, wer_metric, cer_metric)
 
+stats_train = []
+stats_val = []
+
 def forward_pass(batch):
 
     (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda') # For CPU: change 'cuda' to 'cpu'
@@ -65,7 +69,7 @@ def forward_pass(batch):
     return loss
 
 best_wer = np.inf
-for epoch in epochs(10):
+for epoch in epochs(2):
     asr_model.train()
     for batch, files in train_logger(train_loader):
         loss = forward_pass(batch)
@@ -74,8 +78,10 @@ for epoch in epochs(10):
         optimizer.step()
 
     asr_model.eval()
+    stats_train.append([m.running for m in train_logger.metric_trackers])
     for batch, files in val_logger(val_loader):
         forward_pass(batch)
+    stats_val.append([m.running for m in val_logger.metric_trackers])
     
     if wer_metric.running < best_wer:
         best_wer = wer_metric.running
@@ -89,3 +95,8 @@ for epoch in epochs(10):
     
     if epoch >= 100:
         lr_scheduler.step()
+
+data_train = pd.DataFrame(stats_train, columns=["epoch", "ctc", "wer", "cer"])
+data_val = pd.DataFrame(stats_val, columns=["epoch", "ctc", "wer", "cer"])
+data_train.to_csv("asr_train.csv")
+data_val.to_csv("asr_test.csv")

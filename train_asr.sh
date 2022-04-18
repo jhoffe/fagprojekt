@@ -24,4 +24,4 @@ module load cuda/11.3
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-TRAIN_DATASET="asr_model/data/librispeech/authentic-train.txt" TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt" python3 asr_model/experiment.py
+TRAIN_DATASET="asr_model/data/librispeech/dev-clean.txt" TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt" python3 asr_model/experiment.py
