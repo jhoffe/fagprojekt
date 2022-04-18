@@ -108,7 +108,7 @@ class ParallelASRModel(nn.Module):
         x = self.conv1d_layer(input)
         x = x.permute(2, 0, 1)
         new_seq_lens = torch.ceil(seq_lens / 2).long()
-        x = pack_padded_sequence(x, new_seq_lens.cpu())
+        x = pack_padded_sequence(x, new_seq_lens.cpu(), batch_first=True, enforce_sorted=True)
         x, _ = self.lstm_block(x)
         x, _ = pad_packed_sequence(x)
         x = self.output_layer(x)
