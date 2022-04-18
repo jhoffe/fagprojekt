@@ -69,7 +69,7 @@ def forward_pass(batch):
     return loss
 
 best_wer = np.inf
-for epoch in epochs(2):
+for epoch in epochs(int(os.environ["EPOCHS"])):
     asr_model.train()
     for batch, files in train_logger(train_loader):
         loss = forward_pass(batch)

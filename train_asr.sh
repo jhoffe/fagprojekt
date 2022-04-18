@@ -7,7 +7,7 @@
 #BSUB -n 8
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 04:00
+#BSUB -W 48:00
 #BSUB -u s204071@student.dtu.dk
 #BSUB -B
 #BSUB -N
@@ -24,4 +24,4 @@ module load cuda/11.3
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-TRAIN_DATASET="asr_model/data/librispeech/authentic-dev-clean.txt" TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt" python3 asr_model/experiment.py
+TRAIN_DATASET="asr_model/data/librispeech/authentic-train.txt" TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt" EPOCHS=25 python3 asr_model/experiment.py
