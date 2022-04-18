@@ -11,9 +11,9 @@ this task using te default parameters from torchaudio.
 
 INPUT_RATE = 16000
 OUTPUT_RATE = 22050
-sets = ["test-clean", "test-other", "train-clean-100", "train-clean-360", "train-other-500"]
+training_sets = ["train-clean-100", "train-clean-360", "train-other-500"]
 
-LS_PATH = "{}/data/librispeech".format(os.getcwd())
+LS_PATH = "{}/data/librispeech".format(os.getcwd()) # skal måske fixes
 
 if not os.path.exists(LS_PATH):
     os.makedirs(LS_PATH)
@@ -22,27 +22,22 @@ def audio_upsample(audio, input_rate, output_rate):
     upsample = T.Resample(input_rate, output_rate)
     return upsample(audio)
 
-for set in sets:
-    OUTPUT_PATH = "{}/data/authentic_speech_upsampled/{}".format(os.getcwd(), set)
+for training_set in training_sets:
+    OUTPUT_PATH = "{}/data/authentic_speech_upsampled/{}".format(os.getcwd(), training_set)
 
     if not os.path.exists(OUTPUT_PATH):
         os.makedirs(OUTPUT_PATH)
 
-    dataset = torchaudio.datasets.LIBRISPEECH(root=LS_PATH, url=training_set, download=True)
+    data = './data/{}/'.format(training_set) # skal fixes
+    datasets = os.listdir(data)
 
-    for sample in tqdm(dataset, desc="Upsampling files for {}".format(set)):
-        upsampled = audio_upsample(sample[0], input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
+    for dataset in datasets:
+        files = os.listdir("./data/synthetic_speech/{}/".format(dataset)) # skal fixes
 
-        filename = "s{}_c{}_u{}.wav".format(sample[3], sample[4], sample[5])
-        filepath = "{}/{}".format(OUTPUT_PATH, filename)
+        for file in tqdm(files, desc="Upsampling files for {}".format(dataset)):
+            upsampled = audio_upsample(file, input_rate=INPUT_RATE, output_rate=OUTPUT_RATE)
+            filename = "{}.wav".format(os.path.basename(file.name))
+            filepath = "{}/{}".format(OUTPUT_PATH, filename)
 
-        if not os.path.exists(filepath):
-            torchaudio.save(filepath=filepath, src=upsampled, sample_rate=OUTPUT_RATE)
-
-
-
-
-
-
-
-
+            if not os.path.exists(filepath):
+                torchaudio.save(filepath=filepath, src=upsampled.cpu(), sample_rate=OUTPUT_RATE)
