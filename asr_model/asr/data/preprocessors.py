@@ -57,7 +57,7 @@ class SpectrogramPreprocessor():
         if not path.endswith(self.ext):
             path = path + self.ext
 
-        sample_rate, pcm = torchaudio.load(path, format="flac", channels_first=False) #wavfile.read(path)
+        pcm, sample_rate = torchaudio.load(path, format="flac") #wavfile.read(path)
         pcm = pcm.numpy().reshape(-1)
 
         assert sample_rate == self.sample_rate, f'Audio file did not have the expected sample rate: {path}'
