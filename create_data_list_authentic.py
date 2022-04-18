@@ -31,8 +31,7 @@ for dataset in datasets:
 
     for cds_name, cds in combined.items():
         if dataset in cds:
-            combined_datasets[cds_name] += "\n" + files_string
-
+            combined_datasets[cds_name] += "\n" + files_string if combined_datasets[cds_name] != "" else files_string
 
     f = open("asr_model/data/librispeech/authentic-{}.txt".format(dataset), "w+")
     f.write(files_string)
