@@ -15,7 +15,6 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-
 train_source = 'data/librispeech/dev_clean.txt'
 val_source = 'data/librispeech/test_clean.txt'
 
@@ -77,7 +76,7 @@ for epoch in epochs(200):
     
     if wer_metric.running < best_wer:
         best_wer = wer_metric.running
-        #test
+
         # ... and save model
     
     if epoch >= 100:
