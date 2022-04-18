@@ -16,6 +16,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 TRAIN_DATASET = os.environ['TRAIN_DATASET']
 TEST_DATASET = os.environ['TEST_DATASET']
+PATH = "model_testing.pt"
 
 train_source = TRAIN_DATASET
 val_source = TEST_DATASET
@@ -78,7 +79,13 @@ for epoch in epochs(10):
     
     if wer_metric.running < best_wer:
         best_wer = wer_metric.running
-        #test
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': asr_model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': loss,
+            ...
+        }, PATH)
         # ... and save model
     
     if epoch >= 100:
