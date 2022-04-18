@@ -3,7 +3,7 @@
 #BSUB -o train_asr_%J.out
 #BSUB -e train_asr_%J.err
 #BSUB -q gpuv100
-#BSUB -gpu "num=4:mode=exclusive_process"
+#BSUB -gpu "num=2:mode=exclusive_process"
 #BSUB -n 8
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
