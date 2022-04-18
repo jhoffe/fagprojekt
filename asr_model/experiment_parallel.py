@@ -35,7 +35,7 @@ train_loader = DataLoader(train_dataset, num_workers=4, pin_memory=True, collate
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=16)
 
-asr_model = nn.DataParallel(ASRModel, device_ids=list(range(torch.cuda.device_count()))) # For CPU: remove .cuda()
+asr_model = nn.DataParallel(ASRModel().cuda(), device_ids=list(range(torch.cuda.device_count()))) # For CPU: remove .cuda()
 ctc_loss = nn.CTCLoss(reduction='sum').cuda() # For CPU: remove .cuda()
 optimizer = torch.optim.Adam(asr_model.parameters(), lr=3e-4)
 lr_scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=5e-5)
@@ -52,9 +52,8 @@ stats_train = []
 stats_val = []
 
 def forward_pass(batch):
-
     (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda') # For CPU: change 'cuda' to 'cpu'
-    logits, output_sl = asr_model.forward(x, x_sl.cpu()) 
+    logits, output_sl = asr_model.forward(x, x_sl.to('cuda'))
     log_probs = F.log_softmax(logits, dim=2)
     loss = ctc_loss(log_probs, y, output_sl, y_sl)
 
