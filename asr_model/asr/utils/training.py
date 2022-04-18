@@ -2,6 +2,7 @@ import os
 import pickle
 from time import time
 from math import cos
+from tqdm import tqdm
 
 import torch
 from scipy.io import wavfile
@@ -40,12 +41,15 @@ class Logger():
         
         start = time()
         log_len = 0
-        for batch in loader:
+        ploader = tqdm(loader, desc=f"Processing batches for {self.name}")
+        for batch in ploader:
             self.minor += 1
             yield batch
-            print(log_len * ' ', end='\r') # hack to clear output if previous log was longer
+            #print(log_len * ' ', end='\r') # hack to clear output if previous log was longer
             metrics_log = ', '.join([t() for t in self.metric_trackers])
-            progress = f'{self.minor}/{self.total}, {(time() - start) / 60:.1f} min(s)'
-            log_line = f'{self.name} [{progress}]: {metrics_log}'
-            print(log_line, end=('\n' if self.minor == self.total else'\r'))
-            log_len = len(log_line)
+            ploader.set_description(desc=f"Processing batches for {self.name}: {metrics_log}", refresh=True)
+
+            #progress = f'{self.minor}/{self.total}, {(time() - start) / 60:.1f} min(s)'
+            #log_line = f'{self.name} [{progress}]: {metrics_log}'
+            #print(log_line, end=('\n' if self.minor == self.total else'\r'))
+            #log_len = len(log_line)

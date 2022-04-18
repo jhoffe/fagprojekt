@@ -6,6 +6,7 @@ from asr.modules import ASRModel
 from asr.utils.training import batch_to_tensor, epochs, Logger
 from asr.utils.text import greedy_ctc
 from asr.utils.metrics import ErrorRateTracker, LossTracker
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -64,7 +65,6 @@ def forward_pass(batch):
 
 best_wer = np.inf
 for epoch in epochs(10):
-    
     asr_model.train()
     for batch, files in train_logger(train_loader):
         loss = forward_pass(batch)
