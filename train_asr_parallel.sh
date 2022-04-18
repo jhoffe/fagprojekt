@@ -2,10 +2,11 @@
 #BSUB -J train_asr
 #BSUB -o train_asr_%J.out
 #BSUB -e train_asr_%J.err
-#BSUB -gpu "num=2:mode=exclusive_process"
-#BSUB -n 4
+#BSUB -q gpuv100
+#BSUB -gpu "num=4:mode=exclusive_process"
+#BSUB -n 8
 #BSUB -R "rusage[mem=2G]"
-#BSUB -R "span[hosts=1]"
+#BSUB -R "span[hosts=2]"
 #BSUB -W 04:00
 #BSUB -u s204071@student.dtu.dk
 #BSUB -B
