@@ -35,7 +35,7 @@ def upsample(sample):
 if __name__ == '__main__':
     INPUT_RATE = 16000
     OUTPUT_RATE = 22050
-    training_sets = ["test-clean", "test-other", "train-clean-100", "train-clean-360", "train-other-500"]
+    training_sets = ["dev-clean"]
 
     LS_PATH = "{}/data/librispeech".format(os.getcwd()) # skal måske fixes
 

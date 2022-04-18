@@ -24,15 +24,10 @@ for dataset in datasets:
     filtered_full_paths = []
 
     for path in tqdm(full_paths):
-        data = torchaudio.load(filepath=path + ".flac")
-
-        num_frames = data[0].size()[0]
-
-        if num_frames/SAMPLE_RATE < LIMIT:
-            filtered_full_paths.append(path)
+        filtered_full_paths.append(path)
 
     files_string = "\n".join(filtered_full_paths)
 
-    f = open("asr/data/librispeech/{}.txt".format(dataset), "w+")
+    f = open("asr/data/librispeech/authentic-{}.txt".format(dataset), "w+")
     f.write(files_string)
     f.close()
