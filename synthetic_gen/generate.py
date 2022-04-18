@@ -82,29 +82,27 @@ def generate_audio_sample(sequences, lengths):
     return waveglow.infer(mel)
 
 def generate_audio_samples(dataset):
-    text_samples = prepare_text_samples(dataset)
-
     i = 0
-    for text_sample in tqdm(text_samples, desc="Processing samples"):
-        filename = "{}.wav".format(i)
-        txt_filename = "{}.txt".format(i)
+    for sample in tqdm(dataset, desc="Processing samples"):
+        filename = "s{}_c{}_u{}.flac".format(sample[3], sample[4], sample[5])
+        txt_filename = "s{}_c{}_u{}.txt".format(sample[3], sample[4], sample[5])
         filepath = "{}/{}".format(OUTPUT_PATH, filename)
         txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
 
         # if os.path.exists(filepath) and os.path.exists(txt_filepath):
         #     continue
 
-        sequences, lengths = utils.prepare_input_sequence([text_sample])
+        sequences, lengths = utils.prepare_input_sequence([sample[2]])
 
         audio_samples = generate_audio_sample(sequences, lengths)
 
         # If file has already been generated, then there is no reason to generate again
         if not os.path.exists(filepath):
-            torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE)
+            torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE, format="flac")
 
         if not os.path.exists(txt_filepath):
             f = open(txt_filepath, "w")
-            f.write(text_sample)
+            f.write(sample[2])
             f.close()
         i += 1
 

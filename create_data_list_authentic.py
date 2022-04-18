@@ -1,6 +1,7 @@
 import os
 import torchaudio
 from tqdm import tqdm
+from collections import defaultdict
 
 """
 The aim of this file is to create lists of the files to be used in the ASR model.
@@ -12,6 +13,10 @@ have corresponding synthetic, unfiltered counterparts.
 
 datasets = os.listdir('./data/authentic_speech_upsampled/')
 
+combined = {'authentic-train': ['train-clean-100', 'train-clean-360', 'train-other-500']}
+
+combined_datasets = defaultdict(lambda: "")
+
 LIMIT = 18
 SAMPLE_RATE = 22050
 
@@ -19,20 +24,20 @@ for dataset in datasets:
     files = os.listdir("./data/authentic_speech_upsampled/{}/".format(dataset))
 
     full_paths = list(
-        set(["data/authentic_speech_upsampled/{}/".format(dataset) + filename.replace('.wav', '').replace('.txt', '') for filename
+        set(["data/authentic_speech_upsampled/{}/".format(dataset) + filename.replace('.flac', '').replace('.txt', '') for filename
              in files]))
-    filtered_full_paths = []
 
-    for path in tqdm(full_paths):
-        data = torchaudio.load(filepath=path + ".wav")
+    files_string = "\n".join(full_paths)
 
-        num_frames = data[0].size()[0]
+    for cds_name, cds in combined.items():
+        if dataset in cds:
+            combined_datasets[cds_name] += "\n" + files_string if combined_datasets[cds_name] != "" else files_string
 
-        if num_frames/SAMPLE_RATE < LIMIT:
-            filtered_full_paths.append(path)
-
-    files_string = "\n".join(filtered_full_paths)
-
-    f = open("asr/data/librispeech/{}.txt".format(dataset), "w+")
+    f = open("asr_model/data/librispeech/authentic-{}.txt".format(dataset), "w+")
     f.write(files_string)
+    f.close()
+
+for cds_name, cds in combined_datasets.items():
+    f = open(f"asr_model/data/librispeech/{cds_name}.txt", "w+")
+    f.write(cds)
     f.close()
