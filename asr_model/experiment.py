@@ -1,5 +1,4 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2' # For CPU: change '0' to '' (perhaps redundant)
 
 from asr.data import BaseDataset
 from asr.data.preprocessors import SpectrogramPreprocessor, TextPreprocessor
@@ -15,9 +14,11 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+TRAIN_DATASET = os.environ['TRAIN_DATASET']
+TEST_DATASET = os.environ['TEST_DATASET']
 
-train_source = 'data/librispeech/dev_clean.txt'
-val_source = 'data/librispeech/test_clean.txt'
+train_source = TRAIN_DATASET
+val_source = TEST_DATASET
 
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()
