@@ -31,7 +31,7 @@ for dataset in datasets:
 
     for cds_name, cds in combined.items():
         if dataset in cds:
-            combined_datasets[cds_name] += files_string
+            combined_datasets[cds_name] += "\n" + files_string
 
 
     f = open("asr_model/data/librispeech/authentic-{}.txt".format(dataset), "w+")
