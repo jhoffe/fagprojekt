@@ -8,7 +8,7 @@ from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
 
 class SpectrogramPreprocessor():
 
-    def __init__(self, ext='.wav', sample_rate=16000, window_size=0.02, stride=0.01, power_spectrum=True, num_mels=80, 
+    def __init__(self, ext='.flac', sample_rate=22050, window_size=0.02, stride=0.01, power_spectrum=True, num_mels=80,
                  logscale=True, normalize=True, frq_bin=True, output_format='NFHT'):
         """
         Converts PCM-based files to spectrograms.
@@ -58,6 +58,7 @@ class SpectrogramPreprocessor():
             path = path + self.ext
 
         sample_rate, pcm = torchaudio.load(path, format="flac", channels_first=False) #wavfile.read(path)
+        pcm = pcm.numpy().reshape(-1)
 
         assert sample_rate == self.sample_rate, f'Audio file did not have the expected sample rate: {path}'
         assert len(pcm) > int(self.window_size * self.sample_rate), f'PCM audio has too few samples: {path}'
