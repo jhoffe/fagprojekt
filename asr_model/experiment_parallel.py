@@ -53,7 +53,7 @@ stats_val = []
 
 def forward_pass(batch):
     (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda') # For CPU: change 'cuda' to 'cpu'
-    logits, output_sl = asr_model.forward(x, x_sl.to('cuda'))
+    logits, output_sl = asr_model.forward(x, x_sl.to('cpu'))
     log_probs = F.log_softmax(logits, dim=2)
     loss = ctc_loss(log_probs, y, output_sl, y_sl)
 
