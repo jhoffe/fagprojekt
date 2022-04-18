@@ -1,0 +1,7 @@
+python==3.6.10
+torch==1.7.1
+numpy==1.18.1
+scipy==1.4.1
+librosa==0.7.2
+numba==0.48
+editdistance
