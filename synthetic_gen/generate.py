@@ -84,7 +84,7 @@ def generate_audio_sample(sequences, lengths):
 def generate_audio_samples(dataset):
     i = 0
     for sample in tqdm(dataset, desc="Processing samples"):
-        filename = "s{}_c{}_u{}.wav".format(sample[3], sample[4], sample[5])
+        filename = "s{}_c{}_u{}.flac".format(sample[3], sample[4], sample[5])
         txt_filename = "s{}_c{}_u{}.txt".format(sample[3], sample[4], sample[5])
         filepath = "{}/{}".format(OUTPUT_PATH, filename)
         txt_filepath = "{}/{}".format(OUTPUT_PATH, txt_filename)
@@ -98,7 +98,7 @@ def generate_audio_samples(dataset):
 
         # If file has already been generated, then there is no reason to generate again
         if not os.path.exists(filepath):
-            torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE)
+            torchaudio.save(filepath=filepath, src=audio_samples.cpu(), sample_rate=RATE, format="flac")
 
         if not os.path.exists(txt_filepath):
             f = open(txt_filepath, "w")
