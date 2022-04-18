@@ -2,7 +2,7 @@ import os
 
 from asr.data import BaseDataset
 from asr.data.preprocessors import SpectrogramPreprocessor, TextPreprocessor
-from asr.modules import ASRModel
+from asr.modules import ParallelASRModel
 from asr.utils.training import batch_to_tensor, epochs, Logger
 from asr.utils.text import greedy_ctc
 from asr.utils.metrics import ErrorRateTracker, LossTracker
@@ -35,7 +35,7 @@ train_loader = DataLoader(train_dataset, num_workers=4, pin_memory=True, collate
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=16)
 
-asr_model = nn.DataParallel(ASRModel().cuda(), device_ids=list(range(torch.cuda.device_count()))) # For CPU: remove .cuda()
+asr_model = nn.DataParallel(ParallelASRModel().cuda(), device_ids=list(range(torch.cuda.device_count()))) # For CPU: remove .cuda()
 ctc_loss = nn.CTCLoss(reduction='sum').cuda() # For CPU: remove .cuda()
 optimizer = torch.optim.Adam(asr_model.parameters(), lr=3e-4)
 lr_scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=5e-5)
