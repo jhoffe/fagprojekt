@@ -83,8 +83,7 @@ for epoch in epochs(10):
             'epoch': epoch,
             'model_state_dict': asr_model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-            'loss': loss,
-            ...
+            'loss': loss
         }, PATH)
         # ... and save model
     
