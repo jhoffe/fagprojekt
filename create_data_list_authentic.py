@@ -28,6 +28,6 @@ for dataset in datasets:
 
     files_string = "\n".join(filtered_full_paths)
 
-    f = open("asr/data/librispeech/authentic-{}.txt".format(dataset), "w+")
+    f = open("asr_model/data/librispeech/authentic-{}.txt".format(dataset), "w+")
     f.write(files_string)
     f.close()

@@ -101,7 +101,7 @@ ENV/
 .mypy_cache/
 
 # input data, saved log, checkpoints
-data/
+./data/
 input/
 saved/
 datasets/
@@ -114,3 +114,4 @@ __MACOSX/
 fagprojekt-env/
 
 *.lock
+/data/
