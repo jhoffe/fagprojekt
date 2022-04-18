@@ -24,4 +24,4 @@ module load cuda/11.3
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-LS_DATASET_TYPE="train-clean-100" python3 -m synthetic_gen.generate
+LS_DATASET_TYPE="train-clean-360" python3 -m synthetic_gen.generate
