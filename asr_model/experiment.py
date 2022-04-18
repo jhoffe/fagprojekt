@@ -78,10 +78,10 @@ for epoch in epochs(2):
         optimizer.step()
 
     asr_model.eval()
-    stats_train.append([m.running for m in train_logger.metric_trackers])
+    stats_train.append([epoch] + [m.running for m in train_logger.metric_trackers])
     for batch, files in val_logger(val_loader):
         forward_pass(batch)
-    stats_val.append([m.running for m in val_logger.metric_trackers])
+    stats_val.append([epoch] + [m.running for m in val_logger.metric_trackers])
     
     if wer_metric.running < best_wer:
         best_wer = wer_metric.running
