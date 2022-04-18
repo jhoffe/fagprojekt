@@ -17,7 +17,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 TRAIN_DATASET = os.environ['TRAIN_DATASET']
 TEST_DATASET = os.environ['TEST_DATASET']
-PATH = "model_testing.pt"
+PATH = "model_authentic.pt"
 
 train_source = TRAIN_DATASET
 val_source = TEST_DATASET
