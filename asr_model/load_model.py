@@ -9,6 +9,7 @@ from asr.utils.text import greedy_ctc
 from asr.utils.metrics import ErrorRateTracker, LossTracker
 
 import numpy as np
+import csv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -52,9 +53,26 @@ def forward_pass(batch):
     cer_metric.update(ref_batch, hyp_batch)
     ctc_metric.update(loss.item(), weight=output_sl.sum().item())
 
-    return loss
+    return loss, wer_metric, cer_metric, ctc_metric
 
 
 asr_model.eval()
+metrics = {}
+
 for batch, files in val_logger(val_loader):
-    forward_pass(batch)
+    loss, wer_metric, cer_metric, ctc_metric = forward_pass(batch)
+    metrics[str(batch)] = [wer_metric, cer_metric, ctc_metric]
+
+CSVPATH = "{}data/metrics".format(os.getcwd())
+
+if not os.path.exists(CSVPATH):
+    os.makedirs(CSVPATH)
+
+metric_file = open("CSVPATH/{}".format("metrics.csv"), "w")
+writer = csv.writer(metric_file)
+
+for key, value in metrics.items():
+    writer.writerow([key, value[0], value[1], value[2]])
+
+metric_file.close()
+
