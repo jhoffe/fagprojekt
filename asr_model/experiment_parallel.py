@@ -6,7 +6,6 @@ from asr.modules import ParallelASRModel
 from asr.utils.training import batch_to_tensor, epochs, Logger
 from asr.utils.text import greedy_ctc
 from asr.utils.metrics import ErrorRateTracker, LossTracker
-from tqdm import tqdm
 import pandas as pd
 
 import numpy as np

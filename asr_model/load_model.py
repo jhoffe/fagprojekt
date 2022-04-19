@@ -16,8 +16,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-val_source = 'data/librispeech/dev_clean.txt'
-load_path = 'model.pt'
+val_source = os.environ["TEST_DATASET"]
+load_path = os.environ["MODEL_PATH"]
 
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()
