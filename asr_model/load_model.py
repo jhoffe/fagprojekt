@@ -29,7 +29,8 @@ val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=
                         batch_size=16)
 
 asr_model = ASRModel(dropout=0.05).cuda() # For CPU: remove .cuda()
-asr_model.load_state_dict(torch.load(load_path))
+model_parameters = torch.load(load_path)
+asr_model.load_state_dict(model_parameters["model_state_dict"])
 ctc_loss = nn.CTCLoss(reduction='sum').cuda() # For CPU: remove .cuda()
 
 wer_metric = ErrorRateTracker(word_based=True)
