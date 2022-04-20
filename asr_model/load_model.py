@@ -52,7 +52,6 @@ def forward_pass(batch):
 
     return loss, wer_metric, cer_metric, ctc_metric
 
-
 asr_model.eval()
 metrics = []
 

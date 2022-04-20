@@ -61,7 +61,7 @@ for batch, files in val_logger(val_loader):
     loss, wer_metric, cer_metric, ctc_metric = forward_pass(batch)
 
     with open(files[0] + ".txt") as f:
-        metrics.append([f.read(), wer_metric, cer_metric, ctc_metric])
+        metrics.append([f.read(), wer_metric.running, cer_metric.running, ctc_metric.running])
 
 df = pd.DataFrame(data=metrics, columns=["text", "wer", "cer", "ctc"])
 df.to_csv("results/test_sample_errors.csv")
