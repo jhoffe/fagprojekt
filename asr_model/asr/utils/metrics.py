@@ -93,6 +93,7 @@ class ErrorRateTracker():
         self.word_based = word_based
         self.precision = precision
         self.name = name or ('WER' if word_based else 'CER')
+        self.current = 0
         self.reset()  # all attributes are defined in reset
 
     def update(self, ref_batch, hyp_batch):
@@ -105,8 +106,10 @@ class ErrorRateTracker():
         """
         batch_func = batch_wer if self.word_based else batch_cer
         edits_batch, length_batch = batch_func(ref_batch, hyp_batch, return_error=False)
+
         self.edits += edits_batch
         self.length += length_batch
+        self.current = edits_batch / length_batch
         self.running = self.edits / self.length
 
     def reset(self):
@@ -115,6 +118,7 @@ class ErrorRateTracker():
         """
         self.edits = 0
         self.length = 0
+        self.current = 0
         self.running = np.inf
 
     def __call__(self):

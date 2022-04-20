@@ -51,17 +51,16 @@ def forward_pass(batch):
     cer_metric.update(ref_batch, hyp_batch)
     ctc_metric.update(loss.item(), weight=output_sl.sum().item())
 
-    return loss, wer_metric, cer_metric, ctc_metric
+    return ref_batch[0], hyp_batch[0], loss, wer_metric, cer_metric, ctc_metric
 
 
 asr_model.eval()
 metrics = []
 
 for batch, files in val_logger(val_loader):
-    loss, wer_metric, cer_metric, ctc_metric = forward_pass(batch)
+    ref, hyp, loss, wer_metric, cer_metric, ctc_metric = forward_pass(batch)
 
-    with open(files[0] + ".txt") as f:
-        metrics.append([f.read(), wer_metric.running, cer_metric.running, ctc_metric.running])
+    metrics.append([files[0], ref, hyp, wer_metric.current, cer_metric.current])
 
-df = pd.DataFrame(data=metrics, columns=["text", "wer", "cer", "ctc"])
+df = pd.DataFrame(data=metrics, columns=["file_path", "ref", "hyp", "wer", "cer"])
 df.to_csv("results/test_sample_errors.csv")
