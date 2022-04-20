@@ -1,0 +1,9 @@
+data/authentic_speech_upsampled/dev-clean/s3752_c4944_u18
+data/authentic_speech_upsampled/dev-clean/s251_c136532_u9
+data/authentic_speech_upsampled/dev-clean/s422_c122949_u12
+data/authentic_speech_upsampled/dev-clean/s1462_c170145_u13
+data/authentic_speech_upsampled/dev-clean/s5694_c64029_u13
+data/authentic_speech_upsampled/dev-clean/s84_c121123_u8
+data/authentic_speech_upsampled/dev-clean/s3000_c15664_u41
+data/authentic_speech_upsampled/dev-clean/s1919_c142785_u1
+data/authentic_speech_upsampled/dev-clean/s84_c121550_u6
