@@ -5,12 +5,13 @@ from asr.data.preprocessors import SpectrogramPreprocessor, TextPreprocessor
 from asr.modules import ASRModel
 from asr.utils.training import batch_to_tensor, epochs, Logger
 from asr.utils.text import greedy_ctc
-from asr.utils.metrics import ErrorRateTracker, LossTracker, batch_error_rate
+from asr.utils.metrics import ErrorRateTracker, LossTracker
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+import pandas as pd
 
 val_source = os.environ["TEST_DATASET"]
 load_path = os.environ["MODEL_PATH"]
@@ -22,7 +23,7 @@ preprocessor = [spec_preprocessor, text_preprocessor]
 val_dataset = BaseDataset(source=val_source, preprocessor=preprocessor, sort_by=0)
 
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
-                        batch_size=16)
+                        batch_size=1)
 
 asr_model = ASRModel(dropout=0.05).cuda() # For CPU: remove .cuda()
 model_parameters = torch.load(load_path)
@@ -58,3 +59,9 @@ metrics = []
 
 for batch, files in val_logger(val_loader):
     loss, wer_metric, cer_metric, ctc_metric = forward_pass(batch)
+
+    with open(files[0] + ".txt") as f:
+        metrics.append([f.read(), wer_metric, cer_metric, ctc_metric])
+
+df = pd.DataFrame(data=metrics, columns=["text", "wer", "cer", "ctc"])
+df.to_csv("results/test_sample_errors.csv")

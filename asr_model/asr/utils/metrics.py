@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import editdistance
 
+
 def batch_cer(ref_batch, hyp_batch, return_error=True, indiBatch=False):
     """
     Compute the cer for a whole batch.
@@ -63,11 +64,20 @@ def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error, individualBa
     refs = map(tokenizer, ref_batch)
     hyps = map(tokenizer, hyp_batch)
     edits, N = np.sum([error_rate(ref, hyp, return_error=False) for ref, hyp in zip(refs, hyps)], axis=0)
-    if(individualBatch):
+    if individualBatch:
         error_vector = [error_rate(ref, hyp, return_error=False) for ref, hyp in zip(refs, hyps)]
-        return error_vector
+        return error_vector, float(N)
     else:
         return edits / N if return_error else (edits, float(N))
+
+
+def batch_sample_stats(ref_batch, hyp_batch, tokenizer=lambda x: x.split()):
+    refs = map(tokenizer, ref_batch)
+    hyps = map(tokenizer, hyp_batch)
+
+    edits = [editdistance.eval(ref, hyp) for ref, hyp in zip(refs, hyps)]
+    len_ref = len(ref)
+
 
 class ErrorRateTracker():
 
@@ -83,9 +93,9 @@ class ErrorRateTracker():
         self.word_based = word_based
         self.precision = precision
         self.name = name or ('WER' if word_based else 'CER')
-        self.reset() # all attributes are defined in reset
+        self.reset()  # all attributes are defined in reset
 
-    def update(self, ref_batch, hyp_batch, indiBatch=False):
+    def update(self, ref_batch, hyp_batch):
         """
         Updates the error rate.
 
@@ -93,7 +103,7 @@ class ErrorRateTracker():
             ref_batch (list): The reference strings.
             hyp_batch (list): The hypothesis strings.
         """
-        batch_func =  batch_wer(indiBatch=indiBatch) if self.word_based else batch_cer(indiBatch=indiBatch)
+        batch_func = batch_wer if self.word_based else batch_cer
         edits_batch, length_batch = batch_func(ref_batch, hyp_batch, return_error=False)
         self.edits += edits_batch
         self.length += length_batch
@@ -124,7 +134,7 @@ class LossTracker():
         """
         self.precision = precision
         self.name = name or 'Loss'
-        self.reset() # all attributes are defined in reset
+        self.reset()  # all attributes are defined in reset
 
     def update(self, loss_batch, weight=None):
         """
@@ -146,7 +156,7 @@ class LossTracker():
             l1 = sum(loss_batch) / w1
 
         w0, l0 = self.weight_sum, self.running
-        wt = w0 + w1 
+        wt = w0 + w1
         self.running = l0 * (w0 / wt) + l1 * (w1 / wt)
         self.weight_sum = wt
 

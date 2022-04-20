@@ -1,10 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-MODEL = "authentic"
-
-data_train = pd.read_csv("stats_train_{}.csv".format(MODEL), sep=",")
-data_test = pd.read_csv("stats_val_{}.csv".format(MODEL), sep=",")
+data_train = pd.read_csv("results/asr_train.csv")
+data_test = pd.read_csv("results/asr_test.csv")
 
 epoch = data_train["epoch"]
 
