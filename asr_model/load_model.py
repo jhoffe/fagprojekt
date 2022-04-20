@@ -50,8 +50,8 @@ def forward_pass(batch):
     hyp_batch = text_preprocessor.decode_batch(hyp_encoded_batch)
     ref_batch = text_preprocessor.decode_batch(y, y_sl)
 
-    wer_metric.update(ref_batch, hyp_batch)
-    cer_metric.update(ref_batch, hyp_batch)
+    wer_metric.update(ref_batch, hyp_batch, indiBatch=True)
+    cer_metric.update(ref_batch, hyp_batch, indiBatch=True)
     ctc_metric.update(loss.item(), weight=output_sl.sum().item())
 
     return loss, wer_metric, cer_metric, ctc_metric

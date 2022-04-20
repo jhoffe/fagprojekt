@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import editdistance
 
-def batch_cer(ref_batch, hyp_batch, return_error=True):
+def batch_cer(ref_batch, hyp_batch, return_error=True, indiBatch=False):
     """
     Compute the cer for a whole batch.
     Args:
@@ -14,10 +14,10 @@ def batch_cer(ref_batch, hyp_batch, return_error=True):
             float: word error rate for the batch
             tuple: number of edits & number of words
     """
-    return batch_error_rate(ref_batch, hyp_batch, list, return_error)
+    return batch_error_rate(ref_batch, hyp_batch, list, return_error, individualBatch=indiBatch)
 
 
-def batch_wer(ref_batch, hyp_batch, return_error=True):
+def batch_wer(ref_batch, hyp_batch, return_error=True, indiBatch=False):
     """
     Compute the wer for a whole batch.
     Args:
@@ -29,7 +29,7 @@ def batch_wer(ref_batch, hyp_batch, return_error=True):
             float: word error rate for the batch
             tuple: number of edits & number of words
     """
-    return batch_error_rate(ref_batch, hyp_batch, lambda x: x.split(), return_error)
+    return batch_error_rate(ref_batch, hyp_batch, lambda x: x.split(), return_error, individualBatch=indiBatch)
 
 
 def error_rate(ref, hyp, return_error):
@@ -47,7 +47,7 @@ def error_rate(ref, hyp, return_error):
     return edits / len_ref if return_error else (edits, len_ref)
 
 
-def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error):
+def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error, individualBatch=False):
     """
     Compute the error rate for a whole batch.
     Args:
@@ -63,7 +63,11 @@ def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error):
     refs = map(tokenizer, ref_batch)
     hyps = map(tokenizer, hyp_batch)
     edits, N = np.sum([error_rate(ref, hyp, return_error=False) for ref, hyp in zip(refs, hyps)], axis=0)
-    return edits / N if return_error else (edits, float(N))
+    if(individualBatch):
+        error_vector = [error_rate(ref, hyp, return_error=False) for ref, hyp in zip(refs, hyps)]
+        return error_vector
+    else:
+        return edits / N if return_error else (edits, float(N))
 
 class ErrorRateTracker():
 
@@ -81,7 +85,7 @@ class ErrorRateTracker():
         self.name = name or ('WER' if word_based else 'CER')
         self.reset() # all attributes are defined in reset
 
-    def update(self, ref_batch, hyp_batch):
+    def update(self, ref_batch, hyp_batch, indiBatch=False):
         """
         Updates the error rate.
 
@@ -89,7 +93,7 @@ class ErrorRateTracker():
             ref_batch (list): The reference strings.
             hyp_batch (list): The hypothesis strings.
         """
-        batch_func =  batch_wer if self.word_based else batch_cer
+        batch_func =  batch_wer(indiBatch=indiBatch) if self.word_based else batch_cer(indiBatch=indiBatch)
         edits_batch, length_batch = batch_func(ref_batch, hyp_batch, return_error=False)
         self.edits += edits_batch
         self.length += length_batch
