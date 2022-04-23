@@ -7,6 +7,9 @@ from asr.data.batch_sampler import UniformBatchSampler
 from runner import Runner
 
 from torch.utils.data import DataLoader
+import torch
+import random
+import numpy
 
 TRAIN_DATASET_PATH = os.environ['TRAIN_DATASET']
 VAL_DATASET_PATH = os.environ['TEST_DATASET']
@@ -19,6 +22,11 @@ NAME = os.environ['NAME']
 assert TRAIN_UPDATES > 0
 assert BATCH_SIZE > 0
 
+SEED = 42
+torch.manual_seed(SEED)
+random.seed(SEED)
+numpy.random.seed(SEED)
+
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()
 preprocessor = [spec_preprocessor, text_preprocessor]
@@ -26,7 +34,7 @@ preprocessor = [spec_preprocessor, text_preprocessor]
 train_dataset = BaseDataset(source=TRAIN_DATASET_PATH, preprocessor=preprocessor, sort_by=0)
 val_dataset = BaseDataset(source=VAL_DATASET_PATH, preprocessor=preprocessor, sort_by=0)
 
-train_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE)
+train_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
 
 train_loader = DataLoader(train_dataset, num_workers=4, pin_memory=True, collate_fn=train_dataset.collate,
                           batch_sampler=train_sampler)
