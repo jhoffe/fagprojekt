@@ -115,3 +115,4 @@ fagprojekt-env/
 
 *.lock
 /data/
+batch_jobs/logs/*{.err,.out}

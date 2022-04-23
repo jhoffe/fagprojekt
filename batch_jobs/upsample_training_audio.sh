@@ -1,7 +1,7 @@
 #!/bin/sh
 #BSUB -J authentic_upsampled
-#BSUB -o authentic_upsampled_%J.out
-#BSUB -e authentic_upsampled_%J.err
+#BSUB -o logs/authentic_upsampled_%J.out
+#BSUB -e logs/authentic_upsampled_%J.err
 #BSUB -n 16
 #BSUB -R "rusage[mem=8G]"
 #BSUB -R "span[hosts=1]"
@@ -10,6 +10,8 @@
 #BSUB -B
 #BSUB -N
 # end of BSUB options
+
+cd /work3/s204071/fagprojekt
 
 # load a scipy module
 # replace VERSION and uncomment
