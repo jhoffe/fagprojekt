@@ -35,7 +35,11 @@ for dataset in datasets:
     with Pool(processes=int(os.environ["CPU_CORES"])) as p:
         processed_paths = p.map(check_length, full_paths)
 
-    all_paths = filter(lambda p: p is not None, processed_paths)
+    all_paths = []
+
+    for p in processed_paths:
+        if p is not None:
+            all_paths.append(p)
 
     files_string = "\n".join(all_paths)
 
