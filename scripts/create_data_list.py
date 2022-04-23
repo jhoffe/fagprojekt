@@ -19,12 +19,12 @@ for dataset in datasets:
     files = os.listdir("../data/synthetic_speech/{}/".format(dataset))
 
     full_paths = list(
-        set(["../data/synthetic_speech/{}/".format(dataset) + filename.replace('.wav', '').replace('.txt', '') for filename
+        set(["../data/synthetic_speech/{}/".format(dataset) + filename.replace('.flac', '').replace('.txt', '') for filename
              in files]))
     filtered_full_paths = []
 
     for path in tqdm(full_paths):
-        data = torchaudio.load(filepath=path + ".wav")
+        data = torchaudio.load(filepath=path + ".flac", format="flac")
 
         num_frames = data[0].size()[0]
 
@@ -33,6 +33,6 @@ for dataset in datasets:
 
     files_string = "\n".join(filtered_full_paths)
 
-    f = open("asr/data/librispeech/{}.txt".format(dataset), "w+")
+    f = open("asr_model/data/librispeech/{}.txt".format(dataset), "w+")
     f.write(files_string)
     f.close()
