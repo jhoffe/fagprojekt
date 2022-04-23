@@ -8,7 +8,7 @@ for combination, sets in combined.items():
     combined_set = ""
 
     for datalist in sets:
-        f = open(os.path.join(DATALISTS_PATH, f"{datalist}.txt"), "w+")
+        f = open(os.path.join(DATALISTS_PATH, f"{datalist}.txt"), "r")
         combined_set += "\n" + f.read() if combined_set != "" else f.read()
         f.close()
 
