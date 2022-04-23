@@ -27,7 +27,7 @@ module load cuda/11.3
 source fagprojekt-env/bin/activate
 
 export TRAIN_DATASET="asr_model/data/librispeech/synthetic-train.txt"
-export TEST_DATASET="asr_model/data/librispeech/synthetic-test-clean.txt"
+export TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt"
 export MODELS_PATH="asr_model/models"
 export TRAIN_UPDATES=400000
 export BATCH_SIZE=16
