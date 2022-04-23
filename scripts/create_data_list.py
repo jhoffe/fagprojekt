@@ -15,13 +15,14 @@ datasets = os.listdir('data/synthetic_speech/')
 
 LIMIT = 18
 SAMPLE_RATE = 22050
+WINDOW_SIZE = 0.02
 
 def check_length(path):
     data = torchaudio.load(filepath=path + ".flac", format="flac")
 
     num_frames = data[0].size()[1]
 
-    if num_frames / SAMPLE_RATE < LIMIT:
+    if num_frames / SAMPLE_RATE < LIMIT and num_frames > int(SAMPLE_RATE * WINDOW_SIZE):
         return path
 
     print(f"Filtered out: {path}")
