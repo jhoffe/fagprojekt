@@ -39,6 +39,6 @@ for dataset in datasets:
 
     files_string = "\n".join(all_paths)
 
-    f = open("asr_model/data/librispeech/{}.txt".format(dataset), "w+")
+    f = open("asr_model/data/librispeech/synthetic_{}.txt".format(dataset), "w+")
     f.write(files_string)
     f.close()
