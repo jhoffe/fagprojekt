@@ -1,3 +1,5 @@
+import numpy as np
+
 from asr.utils.training import batch_to_tensor, Logger
 from asr.utils.text import greedy_ctc
 from asr.utils.metrics import ErrorRateTracker, LossTracker
@@ -24,6 +26,7 @@ class Runner:
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
         self.models_path = models_path
+        self.best_wer = np.inf
 
         self._set_metrics()
 
@@ -85,13 +88,13 @@ class Runner:
                 + [m.current for m in self.train_logger.metric_trackers]
             )
 
-    def save(self, batch_index=None):
+    def save(self):
         if self.models_path is None:
             return self
 
         self.model.eval()
 
-        file_name = f"asr_model_bi{batch_index}.pt" if batch_index is not None else f"asr_model.pt"
+        file_name = f"asr_model_{self.name}.pt"
         model_path = os.path.join(self.models_path, file_name)
 
         torch.save(self.model, model_path)
@@ -110,6 +113,9 @@ class Runner:
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
                 self.validate(i)
+                wer = self.val_logger.metric_trackers[1].running
+                if wer > self.best_wer:
+                    self.save()
+                    self.best_wer = wer
                 self.train_logger.reset()
-                self.save(i)
                 self.model.train()

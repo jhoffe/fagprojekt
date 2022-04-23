@@ -14,6 +14,7 @@ MODELS_OUTPUT_PATH = os.environ['MODELS_PATH']
 TRAIN_UPDATES = int(os.environ['TRAIN_UPDATES'])
 BATCH_SIZE = int(os.environ['BATCH_SIZE'])
 RESULTS_PATH = os.environ['RESULTS_PATH']
+NAME = os.environ['NAME']
 
 assert TRAIN_UPDATES > 0
 assert BATCH_SIZE > 0
@@ -36,7 +37,7 @@ asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
 
 runner = Runner(
     model=asr_model,
-    name="testing",
+    name=NAME,
     train_loader=train_loader,
     val_loader=val_loader,
     stat_path=RESULTS_PATH,
