@@ -11,7 +11,7 @@ clips become distorted at this point. As such, we only keep the authentic clips 
 have corresponding synthetic, unfiltered counterparts.
 """
 
-datasets = os.listdir('./data/authentic_speech_upsampled/')
+datasets = os.listdir('../data/authentic_speech_upsampled/')
 
 combined = {'authentic-train': ['train-clean-100', 'train-clean-360', 'train-other-500']}
 
