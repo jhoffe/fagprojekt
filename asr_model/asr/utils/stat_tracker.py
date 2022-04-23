@@ -17,7 +17,7 @@ class StatTracker:
 
         self.i += 1
 
-        if self.i % 1 == 0:
+        if self.i % 1000 == 0:
             self.write()
 
         return self
