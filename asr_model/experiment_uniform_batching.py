@@ -3,122 +3,45 @@ import os
 from asr.data import BaseDataset
 from asr.data.preprocessors import SpectrogramPreprocessor, TextPreprocessor
 from asr.modules import ASRModel
-from asr.utils.training import batch_to_tensor, epochs, Logger, UniformLogger
-from asr.utils.text import greedy_ctc
-from asr.utils.metrics import ErrorRateTracker, LossTracker
-import pandas as pd
-from tqdm import tqdm
+from asr.data.batch_sampler import UniformBatchSampler
+from runner import Runner
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import CosineAnnealingLR
-from torch.utils.data import RandomSampler, BatchSampler
 
-TRAIN_DATASET = os.environ['TRAIN_DATASET']
-TEST_DATASET = os.environ['TEST_DATASET']
-PATH = "model_authentic.pt"
+TRAIN_DATASET_PATH = os.environ['TRAIN_DATASET']
+VAL_DATASET_PATH = os.environ['TEST_DATASET']
+MODELS_OUTPUT_PATH = os.environ['MODELS_PATH']
+TRAIN_UPDATES = int(os.environ['TRAIN_UPDATES'])
+BATCH_SIZE = int(os.environ['BATCH_SIZE'])
+RESULTS_PATH = os.environ['RESULTS_PATH']
 
-train_source = TRAIN_DATASET
-val_source = TEST_DATASET
+assert TRAIN_UPDATES > 0
+assert BATCH_SIZE > 0
 
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()
 preprocessor = [spec_preprocessor, text_preprocessor]
 
-class UniformBatchSampler:
-    def __init__(self, dataset_size: int, num_steps: int, batch_size: int):
-        self.num_steps = num_steps
-        self.batch_size = batch_size
-        self.dataset_size = dataset_size
-        self.world = np.arange(self.dataset_size)
+train_dataset = BaseDataset(source=TRAIN_DATASET_PATH, preprocessor=preprocessor, sort_by=0)
+val_dataset = BaseDataset(source=VAL_DATASET_PATH, preprocessor=preprocessor, sort_by=0)
 
-    def __iter__(self):
-        for _ in range(self.__len__()):
-            batch = np.random.choice(self.world, self.batch_size, replace=False).tolist()
-            yield batch
+train_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE)
 
-    def __len__(self) -> int:
-        return self.num_steps
-
-train_dataset = BaseDataset(source=train_source, preprocessor=preprocessor, sort_by=0)
-val_dataset = BaseDataset(source=val_source, preprocessor=preprocessor, sort_by=0)
-
-sampler = UniformBatchSampler(len(train_dataset), 500, 2)
-
-train_loader = DataLoader(train_dataset, num_workers=4, pin_memory=True, collate_fn=train_dataset.collate, batch_sampler=sampler)
+train_loader = DataLoader(train_dataset, num_workers=4, pin_memory=True, collate_fn=train_dataset.collate,
+                          batch_sampler=train_sampler)
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
-                        batch_size=16, shuffle=True)
+                        batch_size=BATCH_SIZE)
 
-asr_model = ASRModel().cuda() # For CPU: remove .cuda()
-ctc_loss = nn.CTCLoss(reduction='sum').cuda() # For CPU: remove .cuda()
-optimizer = torch.optim.Adam(asr_model.parameters(), lr=3e-4)
-lr_scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=5e-5)
+asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
 
-wer_metric = ErrorRateTracker(word_based=True)
-cer_metric = ErrorRateTracker(word_based=False)
-ctc_metric = LossTracker()
+runner = Runner(
+    model=asr_model,
+    name="testing",
+    train_loader=train_loader,
+    val_loader=val_loader,
+    stat_path=RESULTS_PATH,
+    models_path=MODELS_OUTPUT_PATH,
+    validate_every=2000
+)
 
-train_logger = Logger('Training', ctc_metric, wer_metric, cer_metric)
-val_logger = Logger('Validation', ctc_metric, wer_metric, cer_metric)
-test_logger = Logger('Test', ctc_metric, wer_metric, cer_metric)
-
-stats_train = []
-stats_val = []
-
-def forward_pass(batch):
-
-    (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda') # For CPU: change 'cuda' to 'cpu'
-    logits, output_sl = asr_model.forward(x, x_sl.cpu()) 
-    log_probs = F.log_softmax(logits, dim=2)
-    loss = ctc_loss(log_probs, y, output_sl, y_sl)
-
-    hyp_encoded_batch = greedy_ctc(logits, output_sl)
-    hyp_batch = text_preprocessor.decode_batch(hyp_encoded_batch)
-    ref_batch = text_preprocessor.decode_batch(y, y_sl)
-
-    wer_metric.update(ref_batch, hyp_batch)
-    cer_metric.update(ref_batch, hyp_batch)
-    ctc_metric.update(loss.item(), weight=output_sl.sum().item())
-
-    return loss
-
-best_wer = np.inf
-UPDATES = 50
-
-asr_model.train()
-for batch, files in train_logger(train_loader):
-    loss = forward_pass(batch)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-
-
-
-# for batch, files in train_logger(batch_train_loader):
-#     loss = forward_pass(batch)
-#     optimizer.zero_grad()
-#     loss.backward()
-#     optimizer.step()
-# asr_model.eval()
-    # stats_train.append([m.running for m in train_logger.metric_trackers])
-    # for batch, files in val_logger(val_loader):
-    #     forward_pass(batch)
-    # stats_val.append([m.running for m in val_logger.metric_trackers])
-    
-# if wer_metric.running < best_wer:
-#     best_wer = wer_metric.running
-#     torch.save({
-#         'epoch': epoch,
-#         'model_state_dict': asr_model.state_dict(),
-#         'optimizer_state_dict': optimizer.state_dict(),
-#         'loss': loss
-#     }, PATH)
-#     # ... and save model
-
-data_train = pd.DataFrame(stats_train, columns=["epoch", "ctc", "wer", "cer"])
-data_val = pd.DataFrame(stats_val, columns=["epoch", "ctc", "wer", "cer"])
-data_train.to_csv("asr_train.csv")
-data_val.to_csv("asr_test.csv")
+runner.train()
