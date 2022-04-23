@@ -29,59 +29,26 @@ class Logger():
         self.minor = 0
         self.major = 0
         self.metric_trackers = metric_trackers
-    
+
+    def __len__(self):
+        return self.total
+
+    def reset(self):
+        for tracker in self.metric_trackers:
+            tracker.reset()
+
     def __call__(self, loader):
 
         self.total = len(loader) # may not be constant
         self.minor = 0
         self.major += 1
 
-        for tracker in self.metric_trackers:
-            tracker.reset()
-        
-        start = time()
-        log_len = 0
+        self.reset()
+
+        tqdm._instances.clear()
         ploader = tqdm(loader, desc=f"Processing batches for {self.name}")
         for batch in ploader:
             self.minor += 1
             yield batch
-            #print(log_len * ' ', end='\r') # hack to clear output if previous log was longer
-            metrics_log = ', '.join([t() for t in self.metric_trackers])
-            ploader.set_description(desc=f"Processing batches for {self.name}: {metrics_log}", refresh=True)
-
-            #progress = f'{self.minor}/{self.total}, {(time() - start) / 60:.1f} min(s)'
-            #log_line = f'{self.name} [{progress}]: {metrics_log}'
-            #print(log_line, end=('\n' if self.minor == self.total else'\r'))
-            #log_len = len(log_line)
-
-
-class UniformLogger():
-
-    def __init__(self, name, *metric_trackers):
-
-        self.name = name
-        self.total = None
-        self.minor = 0
-        self.major = 0
-        self.metric_trackers = metric_trackers
-
-    def __call__(self, loader, N):
-
-        self.total = N  # may not be constant
-        self.minor = 0
-        self.major += 1
-
-        for tracker in self.metric_trackers:
-            tracker.reset()
-
-        ploader = tqdm(desc=f"Processing batches for {self.name}", total=self.total)
-        iloader = iter(loader)
-
-        for i in range(N):
-            batch = next(iloader)
-
-            ploader.update(i)
-            yield batch
-            # print(log_len * ' ', end='\r') # hack to clear output if previous log was longer
             metrics_log = ', '.join([t() for t in self.metric_trackers])
             ploader.set_description(desc=f"Processing batches for {self.name}: {metrics_log}", refresh=True)

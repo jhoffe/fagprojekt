@@ -138,6 +138,7 @@ class LossTracker():
         """
         self.precision = precision
         self.name = name or 'Loss'
+        self.current = 0
         self.reset()  # all attributes are defined in reset
 
     def update(self, loss_batch, weight=None):
