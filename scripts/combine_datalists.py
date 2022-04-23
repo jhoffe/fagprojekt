@@ -4,7 +4,7 @@ DATALISTS_PATH = "asr_model/data/librispeech"
 
 combined = {'synthetic-train': ['synthetic_train-clean-100', 'synthetic_train-clean-360', 'synthetic_train-other-500']}
 
-for combination, sets in combined.values():
+for combination, sets in combined.items():
     combined_set = ""
 
     for datalist in sets:
