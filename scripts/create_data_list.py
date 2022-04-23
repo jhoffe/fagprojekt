@@ -19,7 +19,7 @@ SAMPLE_RATE = 22050
 def check_length(path):
     data = torchaudio.load(filepath=path + ".flac", format="flac")
 
-    num_frames = data[0].size()[0]
+    num_frames = data[0].size()[1]
 
     if num_frames / SAMPLE_RATE < LIMIT:
         return path
