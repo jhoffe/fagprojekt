@@ -24,6 +24,7 @@ def check_length(path):
     if num_frames / SAMPLE_RATE < LIMIT:
         return path
 
+    print(f"Filtered out: {path}")
     return None
 
 for dataset in datasets:
