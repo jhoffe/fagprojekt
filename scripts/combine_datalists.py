@@ -2,7 +2,26 @@ import os
 
 DATALISTS_PATH = "asr_model/data/librispeech"
 
-combined = {'synthetic-train': ['synthetic_train-clean-100', 'synthetic_train-clean-360', 'synthetic_train-other-500']}
+combined = {
+    'synthetic-train': [
+        'synthetic_train-clean-100',
+        'synthetic_train-clean-360',
+        'synthetic_train-other-500'
+    ],
+    'mixed-train': [
+        'synthetic_train-clean-100',
+        'synthetic_train-clean-360',
+        'synthetic_train-other-500',
+        'authentic-train-clean-100',
+        'authentic-train-clean-360',
+        'authentic-train-other-500'
+    ],
+    'authentic-train': [
+        'authentic-train-clean-100',
+        'authentic-train-clean-360',
+        'authentic-train-other-500'
+    ]
+}
 
 for combination, sets in combined.items():
     combined_set = ""
