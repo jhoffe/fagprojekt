@@ -17,11 +17,11 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 TRAIN_DATASET = os.environ['TRAIN_DATASET']
-TEST_DATASET = os.environ['TEST_DATASET']
+VAL_DATASET = os.environ['TEST_DATASET']
 PATH = "model_authentic.pt"
 
 train_source = TRAIN_DATASET
-val_source = TEST_DATASET
+val_source = VAL_DATASET
 
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()

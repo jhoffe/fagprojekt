@@ -40,7 +40,7 @@ class SpectrogramPreprocessor():
         self.output_format = output_format
 
         self.mel_basis = None if num_mels is None else \
-            librosa.filters.mel(sample_rate, int(window_size * sample_rate), n_mels=num_mels)
+            librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
 
 
     def __call__(self, path):
