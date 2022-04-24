@@ -56,9 +56,13 @@ class Runner:
 
     def forward_pass(self, batch):
         (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda')  # For CPU: change 'cuda' to 'cpu'
-        logits, output_sl = self.model.forward(x, x_sl.cpu())
+        logits, output_sl = self.model.forward(x, x_sl.cpu()) + 1e-12 # Adding a small value to add stability
         log_probs = F.log_softmax(logits, dim=2)
         loss = self.loss(log_probs, y, output_sl, y_sl)
+
+        if loss > 100000:
+            print(f"Crashed because of infinite loss: {loss}")
+            exit(255)
 
         hyp_encoded_batch = greedy_ctc(logits, output_sl)
         hyp_batch = self.text_preprocessor.decode_batch(hyp_encoded_batch)
