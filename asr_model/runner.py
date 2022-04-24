@@ -57,7 +57,7 @@ class Runner:
     def forward_pass(self, batch):
         (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda')  # For CPU: change 'cuda' to 'cpu'
         logits, output_sl = self.model.forward(x, x_sl.cpu())
-        logits = logits + 1e-12 # Adding a small value to add stability
+        logits = logits + 1e-8 # Adding a small value to add stability
         log_probs = F.log_softmax(logits, dim=2)
         loss = self.loss(log_probs, y, output_sl, y_sl)
 
