@@ -14,7 +14,8 @@ import os
 
 
 class Runner:
-    def __init__(self, model, name, train_loader=None, val_loader=None, stat_path="asr_model/results/", models_path=None,
+    def __init__(self, model, name, train_loader=None, val_loader=None, stat_path="asr_model/results/",
+                 models_path=None,
                  validate_every=15000):
         self.model = model
         self.name = name
@@ -34,13 +35,14 @@ class Runner:
         self.train_logger = Logger('Training', *metrics)
         self.val_logger = Logger('Validation', *metrics)
 
-        columns = ["batch_number",  "running_ctc", "running_wer", "running_cer", "current_ctc", "current_wer", "current_cer"]
+        columns = ["batch_number", "running_ctc", "running_wer", "running_cer", "current_ctc", "current_wer",
+                   "current_cer"]
         self.train_stats = None
         self.val_stats = None
         if stat_path is not None:
             self.train_stats = StatTracker(columns, os.path.join(stat_path, f"{name}_asr_train_results.csv"))
             self.val_stats = StatTracker(
-                ["batch_number",  "running_ctc", "running_wer", "running_cer"],
+                ["batch_number", "running_ctc", "running_wer", "running_cer"],
                 os.path.join(stat_path, f"{name}_asr_val_results.csv")
             )
 
@@ -101,7 +103,7 @@ class Runner:
         file_name = f"asr_model_{self.name}.pt"
         model_path = os.path.join(self.models_path, file_name)
 
-        torch.save(self.model, model_path)
+        torch.save(self.model.state_dict(), model_path)
 
         return self
 

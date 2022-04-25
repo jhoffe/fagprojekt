@@ -1,42 +1,47 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
-data_train = pd.read_csv("results/asr_train.csv")
-data_test = pd.read_csv("results/asr_test.csv")
+N = 2000
 
-epoch = data_train["epoch"]
+sets = {
+    'Authentic': {
+        'train': 'authentic_asr_train_results.csv',
+        'val': 'authentic_asr_val_results.csv',
+    },
+    'Mixed': {
+        'train': 'mixed_asr_train_results.csv',
+        'val': 'mixed_asr_val_results.csv',
+    },
+    'Synthetic': {
+        'train': 'synthetic_asr_train_results.csv',
+        'val': 'synthetic_asr_val_results.csv',
+    },
+}
 
-ctc_train = data_train["ctc"]
-wer_train = data_train["wer"]
-cer_train = data_train["cer"]
+metrics = ['wer', "cer"]
 
-ctc_test = data_test["ctc"]
-wer_test = data_test["wer"]
-cer_test = data_test["cer"]
+for metric in metrics:
+    fig, axs = plt.subplots(3, 1, sharex='all')
 
-# ctc plot
-plt.plot(epoch, ctc_train, label="Train")
-plt.plot(epoch, ctc_test, label="Test")
-plt.title("CTC loss")
-plt.xlabel("epoch")
-plt.ylabel("loss")
-plt.legend()
-plt.show()
+    for i, (name, files) in enumerate(sets.items()):
+        data_train = pd.read_csv(os.path.join('asr_model/results/', files['train']))
+        data_val = pd.read_csv(os.path.join('asr_model/results/', files['val']))
 
-# wer plot
-plt.plot(epoch, wer_train, label="Train")
-plt.plot(epoch, wer_test, label="Test")
-plt.title("Word Error Rate (WER)")
-plt.xlabel("epoch")
-plt.ylabel("WER")
-plt.legend()
-plt.show()
+        index = data_train["batch_number"]
 
-# cer
-plt.plot(epoch, cer_train, label="Train")
-plt.plot(epoch, cer_test, label="Test")
-plt.title("Character Error Rate (CER)")
-plt.xlabel("epoch")
-plt.ylabel("CER")
-plt.legend()
-plt.show()
+        data_train[f"windowed_{metric}"] = data_train.rolling(window=N)[f"current_{metric}"].mean()
+
+        data_train.dropna(inplace=True)
+
+        best_train = data_train[f"windowed_{metric}"].min()
+        best_val = data_val[f"running_{metric}"].min()
+
+        axs[i].plot(data_train["batch_number"], data_train[f"windowed_{metric}"], '-', label="Training")
+        axs[i].plot(data_val["batch_number"], data_val[f"running_{metric}"], 'r+', label="Validation")
+        axs[i].set_title(f"{name} (best train = {best_train:.2f}, best test = {best_val:.2f})")
+        axs[i].legend()
+
+    fig.suptitle(f"Rolling {metric.upper()} for (N={N})")
+    fig.tight_layout()
+    plt.savefig(os.path.join('asr_model/results/', f"{metric}_plot.png"))
