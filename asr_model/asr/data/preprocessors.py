@@ -46,7 +46,7 @@ class SpectrogramPreprocessor():
     def augment(self, sample):
         # add random gaussian noise
         amplitude = np.random.uniform(0.001, 0.005)
-        noise = torch.randn(sample.size()) * amplitude
+        noise = torch.randn(sample.size(), device="cuda:0") * amplitude
         sample += noise
 
         augmenter = torch.nn.Sequential(
