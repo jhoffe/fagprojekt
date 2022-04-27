@@ -4,7 +4,7 @@
 #BSUB -e batch_jobs/logs/train_asr_synthetic_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -n 8
+#BSUB -n 16
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 24:00
