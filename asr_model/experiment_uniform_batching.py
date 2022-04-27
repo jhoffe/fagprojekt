@@ -45,7 +45,7 @@ train_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZ
 
 train_loader = DataLoader(train_dataset, pin_memory=True, collate_fn=train_dataset.collate,
                           batch_sampler=train_sampler)
-val_loader = DataLoader(val_dataset, in_memory=True, collate_fn=val_dataset.collate,
+val_loader = DataLoader(val_dataset, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=BATCH_SIZE)
 
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
