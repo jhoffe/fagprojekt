@@ -4,7 +4,7 @@
 #BSUB -e batch_jobs/logs/train_asr_authentic_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -n 32
+#BSUB -n 16
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 24:00
@@ -33,6 +33,6 @@ export TRAIN_UPDATES=500000
 export BATCH_SIZE=16
 export RESULTS_PATH="asr_model/results"
 export NAME="authentic"
-export CPU_CORES=32
+export CPU_CORES=16
 
 python3 asr_model/experiment_uniform_batching.py

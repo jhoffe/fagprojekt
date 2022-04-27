@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import librosa
 import torchaudio
-from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, FrequencyMask
 
 from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
 
@@ -43,23 +42,31 @@ class SpectrogramPreprocessor():
         self.mel_basis = None if num_mels is None else \
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
 
+    @torch.no_grad()
     def augment(self, sample):
-        augmenter = Compose([
-            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.005, p=1),
-            TimeStretch(min_rate=0.9, max_rate=1.5, p=0.9),
-            PitchShift(min_semitones=-12, max_semitones=12, p=0.98),
-            FrequencyMask(p=1)
-        ], p=0.95)
+        # add random gaussian noise
+        amplitude = np.random.uniform(0.001, 0.005)
+        noise = torch.randn(sample.size()) * amplitude
+        sample += noise
 
-        return augmenter(samples=sample, sample_rate=self.sample_rate)
+        augmenter = torch.nn.Sequential(
+            torchaudio.transforms.PitchShift(sample_rate=self.sample_rate, n_steps=4),
+            torchaudio.transforms.TimeStretch(
+                fixed_rate=np.random.uniform(0.9, 1.5)
+            )
+        )
 
+        return augmenter(sample)
+
+
+    @torch.no_grad()
     def __call__(self, path):
         """
         Loads a PCM-based audio file and transforms the PCM signal to a spectrogram.
 
         Args:
             path (string): Path to source file.
-        
+
         Returns:
             np.ndarray: A spectrogram of shape (F/H)T.
         """
@@ -68,14 +75,14 @@ class SpectrogramPreprocessor():
             path = path + self.ext
 
         pcm, sample_rate = torchaudio.load(path, format="flac") #wavfile.read(path)
-        pcm = pcm.numpy().reshape(-1)
+        if self.should_augment:
+            pcm = pcm.cuda()
+            pcm = self.augment(pcm)
+        pcm = pcm.detach().cpu().numpy().reshape(-1)
 
         assert sample_rate == self.sample_rate, f'Audio file did not have the expected sample rate: {path}'
         assert len(pcm) > int(self.window_size * self.sample_rate), f'PCM audio has too few samples: {path}'
         assert np.std(pcm) > 0, f'PCM audio is empty: {path}'
-
-        if self.should_augment:
-            pcm = self.augment(pcm)
 
         stft = librosa.stft(pcm.astype(np.float64), n_fft=int(self.window_size * self.sample_rate), window='hann',
                             hop_length=int(self.stride * sample_rate), dtype=np.complex128)
@@ -91,9 +98,9 @@ class SpectrogramPreprocessor():
             axis = 1 if self.frq_bin else None
             mean, std = np.mean(spectrogram, axis=axis), np.std(spectrogram, axis=axis)
             spectrogram = ((spectrogram.T - mean) / (std + np.finfo(np.float64).eps)).T
-        
+
         return spectrogram.astype(np.float32)
-    
+
     def get_seq_len(self, x):
         """
         Get sequence length of example as returned by __call__
@@ -106,7 +113,7 @@ class SpectrogramPreprocessor():
 
         Args:
             batch (list): List of examples as defined by __call__.
-        
+
         Returns:
             np.ndarray: Batch of spectrograms shaped according to output format.
             np.ndarray: Sequence lengths of size N.
