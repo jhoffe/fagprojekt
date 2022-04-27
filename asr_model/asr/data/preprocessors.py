@@ -2,8 +2,10 @@ import torch
 import numpy as np
 import librosa
 import torchaudio
+from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, FrequencyMask
 
 from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
+
 
 class SpectrogramPreprocessor():
 
@@ -42,26 +44,16 @@ class SpectrogramPreprocessor():
         self.mel_basis = None if num_mels is None else \
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
 
-    @torch.no_grad()
     def augment(self, sample):
-        # add random gaussian noise
-        amplitude = np.random.uniform(0.001, 0.005)
-        noise = torch.randn(sample.size(), device="cuda:0") * amplitude
-        sample += noise
+        augmenter = Compose([
+            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.005, p=1),
+            TimeStretch(min_rate=0.9, max_rate=1.5, p=0.9),
+            PitchShift(min_semitones=-12, max_semitones=12, p=0.98),
+            FrequencyMask(p=1)
+        ], p=0.95)
 
-        window_fn = lambda x: torch.hann_window(512).cuda()
+        return augmenter(samples=sample, sample_rate=self.sample_rate)
 
-        augmenter = torch.nn.Sequential(
-            torchaudio.transforms.PitchShift(sample_rate=self.sample_rate, n_steps=4, window_fn=window_fn),
-            torchaudio.transforms.TimeStretch(
-                fixed_rate=np.random.uniform(0.9, 1.5)
-            )
-        )
-
-        return augmenter(sample)
-
-
-    @torch.no_grad()
     def __call__(self, path):
         """
         Loads a PCM-based audio file and transforms the PCM signal to a spectrogram.
@@ -76,15 +68,15 @@ class SpectrogramPreprocessor():
         if not path.endswith(self.ext):
             path = path + self.ext
 
-        pcm, sample_rate = torchaudio.load(path, format="flac") #wavfile.read(path)
-        if self.should_augment:
-            pcm = pcm.cuda()
-            pcm = self.augment(pcm)
-        pcm = pcm.detach().cpu().numpy().reshape(-1)
+        pcm, sample_rate = torchaudio.load(path, format="flac")  # wavfile.read(path)
+        pcm = pcm.numpy().reshape(-1)
 
         assert sample_rate == self.sample_rate, f'Audio file did not have the expected sample rate: {path}'
         assert len(pcm) > int(self.window_size * self.sample_rate), f'PCM audio has too few samples: {path}'
         assert np.std(pcm) > 0, f'PCM audio is empty: {path}'
+
+        if self.should_augment:
+            pcm = self.augment(pcm)
 
         stft = librosa.stft(pcm.astype(np.float64), n_fft=int(self.window_size * self.sample_rate), window='hann',
                             hop_length=int(self.stride * sample_rate), dtype=np.complex128)
@@ -137,6 +129,7 @@ class SpectrogramPreprocessor():
 
         return [padded_batch, np.array(seq_lens, dtype=np.int32)]
 
+
 class TextPreprocessor():
 
     def __init__(self, ext='.txt', alphabet=LIBRISPEECH_CTC_ALPHABET, clean_func=clean_librispeech, pad_value=-1,
@@ -165,7 +158,7 @@ class TextPreprocessor():
 
         Args:
             path (string): Path to source file.
-        
+
         Returns:
             list: Entries are integers corresponding to characters in the alphabet.
         """
@@ -177,25 +170,25 @@ class TextPreprocessor():
             transcript_raw = self.clean_func(text_file.read())
             transcript = [self.alphabet.index(c) for c in transcript_raw]
         return transcript
-    
+
     def get_seq_len(self, x):
         """
         Get sequence length of example as returned by __call__
         """
         return len(x)
-    
+
     def decode(self, encoded_text):
         """
         Decodes into readable text.
 
         Args:
             encoded_text (list): Integers should correspond to the entries of the alphabet.
-        
+
         Returns:
             string: The decoded text.
         """
         return ''.join([self.alphabet[i] for i in encoded_text])
-    
+
     def decode_batch(self, encoded_batch, seq_lens=None):
         """
         Decodes a batch of encoded text samples into readable text.
@@ -203,11 +196,11 @@ class TextPreprocessor():
         Args:
             encoded_text (list or np.ndarray): Encoded text batch. Each row should correspond to an example.
             seg_lens (list or np.ndarray): Sequence lengths of the examples in the batch.
-        
+
         Returns:
             list of strings: The decoded text batch.
         """
-        
+
         if isinstance(encoded_batch, torch.Tensor):
             encoded_batch = encoded_batch.detach().cpu().numpy()
         if seq_lens is None:
@@ -228,7 +221,7 @@ class TextPreprocessor():
 
         Args:
             batch (list): List of examples as defined by __call__.
-        
+
         Returns:
             np.ndarray: Batch of padded text examples.
             np.ndarray: Sequence lengths of size N.
@@ -239,5 +232,5 @@ class TextPreprocessor():
             T = len(t)
             seq_lens.append(T)
             padded_batch.append(t + [self.pad_value] * (T_max - T))
-        
+
         return [np.array(padded_batch), np.array(seq_lens)]

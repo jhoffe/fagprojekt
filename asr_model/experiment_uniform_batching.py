@@ -44,9 +44,9 @@ val_dataset = BaseDataset(source=VAL_DATASET_PATH, preprocessor=val_preprocessor
 train_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
 
 train_loader = DataLoader(train_dataset, num_workers=CPU_CORES, pin_memory=True, collate_fn=train_dataset.collate,
-                          batch_sampler=train_sampler, prefetch_factor=8)
+                          batch_sampler=train_sampler, prefetch_factor=2)
 val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, collate_fn=val_dataset.collate,
-                        batch_size=BATCH_SIZE, prefetch_factor=8)
+                        batch_size=BATCH_SIZE, prefetch_factor=2)
 
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
 
