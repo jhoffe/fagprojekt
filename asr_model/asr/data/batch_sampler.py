@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class UniformBatchSampler:
     def __init__(self, dataset_size: int, num_steps: int, batch_size: int, seed=None):
         np.random.seed(seed)

@@ -1,8 +1,8 @@
 import torch
 import numpy as np
-from scipy.io import wavfile
 import librosa
 import torchaudio
+from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, FrequencyMask
 
 from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
 
@@ -42,6 +42,17 @@ class SpectrogramPreprocessor():
         self.mel_basis = None if num_mels is None else \
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
 
+    def augment(self, sample):
+
+
+        augmenter = Compose([
+            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.005, p=1),
+            TimeStretch(min_rate=0.9, max_rate=1.5, p=0.9),
+            PitchShift(min_semitones=-12, max_semitones=12, p=0.98),
+            FrequencyMask(p=1)
+        ], p=0.95)
+
+        return augmenter(samples=sample, sample_rate=self.sample_rate)
 
     def __call__(self, path):
         """
@@ -63,6 +74,8 @@ class SpectrogramPreprocessor():
         assert sample_rate == self.sample_rate, f'Audio file did not have the expected sample rate: {path}'
         assert len(pcm) > int(self.window_size * self.sample_rate), f'PCM audio has too few samples: {path}'
         assert np.std(pcm) > 0, f'PCM audio is empty: {path}'
+
+        pcm = self.augment(pcm)
 
         stft = librosa.stft(pcm.astype(np.float64), n_fft=int(self.window_size * self.sample_rate), window='hann',
                             hop_length=int(self.stride * sample_rate), dtype=np.complex128)
