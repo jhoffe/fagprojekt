@@ -59,7 +59,7 @@ class Runner:
     def forward_pass(self, batch):
         (x, x_sl), (y, y_sl) = batch_to_tensor(batch, device='cuda')  # For CPU: change 'cuda' to 'cpu'
         logits, output_sl = self.model.forward(x, x_sl.cpu())
-        logits = logits + 1e-8 # Adding a small value to add stability
+        #logits = logits + 1e-8 # Adding a small value to add stability
         log_probs = F.log_softmax(logits, dim=2)
         loss = self.loss(log_probs, y, output_sl, y_sl)
 
@@ -116,13 +116,14 @@ class Runner:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            #self.lr_scheduler.step()
 
             self._track_train_stats(i)
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
                 self.validate(i)
                 wer = self.val_logger.metric_trackers[1].running
-                if wer > self.best_wer:
+                if wer < self.best_wer:
                     self.save()
                     self.best_wer = wer
                 self.train_logger.reset()
