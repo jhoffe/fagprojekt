@@ -9,7 +9,7 @@ from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
 class SpectrogramPreprocessor():
 
     def __init__(self, ext='.flac', sample_rate=22050, window_size=0.02, stride=0.01, power_spectrum=True, num_mels=80,
-                 logscale=True, normalize=True, frq_bin=True, output_format='NFHT'):
+                 logscale=True, normalize=True, frq_bin=True, output_format='NFHT', should_augment=False):
         """
         Converts PCM-based files to spectrograms.
 
@@ -38,6 +38,7 @@ class SpectrogramPreprocessor():
         self.normalize = normalize
         self.frq_bin = frq_bin
         self.output_format = output_format
+        self.should_augment = should_augment
 
         self.mel_basis = None if num_mels is None else \
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
@@ -75,7 +76,8 @@ class SpectrogramPreprocessor():
         assert len(pcm) > int(self.window_size * self.sample_rate), f'PCM audio has too few samples: {path}'
         assert np.std(pcm) > 0, f'PCM audio is empty: {path}'
 
-        pcm = self.augment(pcm)
+        if self.should_augment:
+            pcm = self.augment(pcm)
 
         stft = librosa.stft(pcm.astype(np.float64), n_fft=int(self.window_size * self.sample_rate), window='hann',
                             hop_length=int(self.stride * sample_rate), dtype=np.complex128)
