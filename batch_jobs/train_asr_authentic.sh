@@ -33,5 +33,6 @@ export TRAIN_UPDATES=500000
 export BATCH_SIZE=16
 export RESULTS_PATH="asr_model/results"
 export NAME="authentic"
+export CPU_CORES=16
 
 python3 asr_model/experiment_uniform_batching.py

@@ -18,6 +18,7 @@ TRAIN_UPDATES = int(os.environ['TRAIN_UPDATES'])
 BATCH_SIZE = int(os.environ['BATCH_SIZE'])
 RESULTS_PATH = os.environ['RESULTS_PATH']
 NAME = os.environ['NAME']
+CPU_CORES = int(os.environ['CPU_CORES'])
 
 assert TRAIN_UPDATES > 0
 assert BATCH_SIZE > 0
@@ -42,9 +43,9 @@ val_dataset = BaseDataset(source=VAL_DATASET_PATH, preprocessor=val_preprocessor
 
 train_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
 
-train_loader = DataLoader(train_dataset, num_workers=4, pin_memory=True, collate_fn=train_dataset.collate,
+train_loader = DataLoader(train_dataset, num_workers=CPU_CORES, pin_memory=True, collate_fn=train_dataset.collate,
                           batch_sampler=train_sampler)
-val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
+val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=BATCH_SIZE)
 
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()

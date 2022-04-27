@@ -44,8 +44,6 @@ class SpectrogramPreprocessor():
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
 
     def augment(self, sample):
-
-
         augmenter = Compose([
             AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.005, p=1),
             TimeStretch(min_rate=0.9, max_rate=1.5, p=0.9),
