@@ -49,7 +49,7 @@ class SpectrogramPreprocessor():
         noise = torch.randn(sample.size(), device="cuda:0") * amplitude
         sample += noise
 
-        window_fn = lambda: torch.hann_window(512).cuda()
+        window_fn = lambda x: torch.hann_window(512).cuda()
 
         augmenter = torch.nn.Sequential(
             torchaudio.transforms.PitchShift(sample_rate=self.sample_rate, n_steps=4, window_fn=window_fn),
