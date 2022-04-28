@@ -98,7 +98,7 @@ def augment(sample):
 
     return augmenter(samples=sample, sample_rate=RATE)
 
-def generate_audio_samples(dataset, augment=False):
+def generate_audio_samples(dataset, augment_sample=False):
     i = 0
     for sample in tqdm(dataset, desc="Processing samples"):
         filename = "s{}_c{}_u{}.flac".format(sample[3], sample[4], sample[5])
@@ -113,7 +113,7 @@ def generate_audio_samples(dataset, augment=False):
 
         audio_samples = generate_audio_sample(sequences, lengths)
 
-        if augment:
+        if augment_sample:
             audio_samples = augment(audio_samples)
         # If file has already been generated, then there is no reason to generate again
         if not os.path.exists(filepath):
