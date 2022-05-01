@@ -2,7 +2,6 @@
 #BSUB -J augment_synthetic
 #BSUB -o batch_jobs/logs/augment_synthetic_%J.out
 #BSUB -e batch_jobs/logs/augment_synthetic_%J.err
-#BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 32
 #BSUB -R "rusage[mem=1G]"
 #BSUB -R "span[hosts=1]"
