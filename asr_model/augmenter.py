@@ -25,7 +25,7 @@ OUTPUT_PATH = os.environ['OUTPUT_PATH']
 
 dataset = BaseDataset(source=DATASET_PATH, sort_by=0, preprocessor=[])
 dataloader = torch.utils.data.DataLoader(dataset, num_workers=CPU_CORES // 2, pin_memory=True,
-                                         batch_size=1, prefetch_factor=2)
+                                         batch_size=32, prefetch_factor=2)
 
 noise_params = {
     "min_amplitude": 0.001,
