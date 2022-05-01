@@ -28,4 +28,4 @@ export DATASET_PATH="asr_model/data/librispeech/synthetic-train.txt"
 export OUTPUT_PATH="/work3/s204096/synthetic_data"
 export CPU_CORES=32
 
-python3 asr_model/experiment_uniform_batching.py
+python3 asr_model/augmenter.py
