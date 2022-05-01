@@ -6,7 +6,7 @@ from asr.data import BaseDataset
 from multiprocessing import Pool
 from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, FrequencyMask
 import warnings
-from tqdm import tqdm
+from tqdm import *
 import numpy as np
 
 torch.random.manual_seed(42)
@@ -60,6 +60,7 @@ augmenter = Compose([
     FrequencyMask(p=1)
 ], p=0.95)
 
+pbar = tqdm(desc="Augmenting samples", total=len(dataloader))
 
 def augment(batch):
     _examples, paths = batch
@@ -83,6 +84,10 @@ def augment(batch):
             new_file.write(contents)
             new_file.close()
 
+    pbar.update()
+
 
 with Pool(CPU_CORES // 2) as pool:
-    pool.map(augment, tqdm(dataloader, "Augmenting data"))
+    pool.map(augment, dataloader)
+
+pbar.close()
