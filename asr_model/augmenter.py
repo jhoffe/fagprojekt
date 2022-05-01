@@ -25,7 +25,7 @@ OUTPUT_PATH = os.environ['OUTPUT_PATH']
 
 dataset = BaseDataset(source=DATASET_PATH, sort_by=0, preprocessor=[])
 dataloader = torch.utils.data.DataLoader(dataset, num_workers=CPU_CORES // 2, pin_memory=True,
-                                         batch_size=16, prefetch_factor=2)
+                                         batch_size=1, prefetch_factor=2)
 
 noise_params = {
     "min_amplitude": 0.001,
@@ -60,8 +60,6 @@ augmenter = Compose([
     FrequencyMask(p=1)
 ], p=0.95)
 
-pbar = tqdm(desc="Augmenting samples", total=len(dataloader))
-
 def augment(batch):
     _examples, paths = batch
 
@@ -84,10 +82,11 @@ def augment(batch):
             new_file.write(contents)
             new_file.close()
 
-    pbar.update()
-
+pbar = tqdm(desc="Augmenting samples", total=len(dataloader))
 
 with Pool(CPU_CORES // 2) as pool:
-    pool.map(augment, dataloader)
+
+    for _ in pool.imap_unordered(augment, dataloader):
+        pbar.update()
 
 pbar.close()
