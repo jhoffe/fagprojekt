@@ -69,12 +69,19 @@ def augment(batch):
 
         augmented_sample = augmenter(samples=sample.numpy().reshape(-1), sample_rate=sample_rate)
 
-        filename = path.split("/")[-1] + ".flac"
+        filename = path.split("/")[-1]
 
         augmented_sample = torch.from_numpy(augmented_sample)[None, :]
 
-        torchaudio.save(os.path.join(OUTPUT_PATH, filename), src=augmented_sample, sample_rate=SAMPLE_RATE,
+        torchaudio.save(os.path.join(OUTPUT_PATH, filename + ".flac"), src=augmented_sample, sample_rate=SAMPLE_RATE,
                         format="flac")
+
+        with open(path + ".txt", "r") as f:
+            contents = f.read()
+
+            new_file = open(os.path.join(OUTPUT_PATH, filename + ".txt"), "w")
+            new_file.write(contents)
+            new_file.close()
 
 
 with Pool(CPU_CORES // 2) as pool:
