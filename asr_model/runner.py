@@ -29,6 +29,13 @@ class Runner:
         self.models_path = models_path
         self.best_wer = np.inf
 
+        self.train_wer = np.append([])
+        self.train_cer = np.append([])
+        self.train_ctc = np.append([])
+        self.val_wer = np.append([])
+        self.val_cer = np.append([])
+        self.val_ctc = np.append([])
+
         self._set_metrics()
 
         metrics = self._get_metrics()
@@ -126,5 +133,18 @@ class Runner:
                 if wer < self.best_wer:
                     self.save()
                     self.best_wer = wer
+
+                self.train_wer = np.append([self.train_wer], [self.train_logger.metric_trackers[1].running])
+                self.train_cer = np.append([self.train_cer], [self.train_logger.metric_trackers[2].running])
+                self.train_ctc = np.append([self.train_ctc], [self.train_logger.metric_trackers[3].running])
+                self.val_wer = np.append([self.val_wer], [self.val_logger.metric_trackers[1].running])
+                self.val_cer = np.append([self.val_cer], [self.val_logger.metric_trackers[2].running])
+                self.val_ctc = np.append([self.val_ctc], [self.val_logger.metric_trackers[3].running])
+
+
                 self.train_logger.reset()
                 self.model.train()
+
+    def saveMetricsAsCSV(self):
+        data = np.array([self.train_wer, self.train_cer, self.train_ctc, self.val_wer, self.val_cer, self.val_ctc])
+        np.savetxt("results/model_{}.csv".format(self.name), data, delimiter=",")
