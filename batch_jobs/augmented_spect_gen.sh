@@ -21,4 +21,7 @@ module load scipy/1.6.3-python-3.9.6
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-CPU_CORES=32 python3 asr_model/augmented_spect_gen.py
+export TRAIN_DATASET="asr_model/data/librispeech/synthetic-train.txt"
+export CPU_CORES=16
+
+python3 asr_model/augmented_spect_gen.py
