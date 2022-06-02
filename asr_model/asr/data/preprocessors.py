@@ -46,11 +46,11 @@ class SpectrogramPreprocessor():
 
     def augment(self, sample):
         augmenter = Compose([
-            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.005, p=1),
-            TimeStretch(min_rate=0.9, max_rate=1.5, p=0.9),
+            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.002, p=1),
+            TimeStretch(min_rate=0.9, max_rate=1.25, p=0.9),
             PitchShift(min_semitones=-12, max_semitones=12, p=0.98),
             FrequencyMask(p=1)
-        ], p=0.95)
+        ], p=0.995)
 
         return augmenter(samples=sample, sample_rate=self.sample_rate)
 
