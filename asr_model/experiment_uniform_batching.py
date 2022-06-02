@@ -19,6 +19,7 @@ BATCH_SIZE = int(os.environ['BATCH_SIZE'])
 RESULTS_PATH = os.environ['RESULTS_PATH']
 NAME = os.environ['NAME']
 CPU_CORES = int(os.environ['CPU_CORES'])
+FORMAT = os.environ["FORMAT"]
 
 assert TRAIN_UPDATES > 0
 assert BATCH_SIZE > 0
@@ -28,15 +29,20 @@ torch.manual_seed(SEED)
 random.seed(SEED)
 numpy.random.seed(SEED)
 
-train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
-                                                  should_augment=True)
-val_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
-                                                should_augment=False)
-
 text_preprocessor = TextPreprocessor()
 
-train_preprocessor = [train_spec_preprocessor, text_preprocessor]
-val_preprocessor = [val_spec_preprocessor, text_preprocessor]
+if FORMAT == "SPEC":
+    train_preprocessor = [text_preprocessor]
+    val_preprocessor = [text_preprocessor]
+
+else:
+    train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
+                                                      should_augment=True)
+    val_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
+                                                    should_augment=False)
+
+    train_preprocessor = [train_spec_preprocessor, text_preprocessor]
+    val_preprocessor = [val_spec_preprocessor, text_preprocessor]
 
 train_dataset = BaseDataset(source=TRAIN_DATASET_PATH, preprocessor=train_preprocessor, sort_by=0)
 val_dataset = BaseDataset(source=VAL_DATASET_PATH, preprocessor=val_preprocessor, sort_by=0)
@@ -49,6 +55,7 @@ val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, col
                         batch_size=BATCH_SIZE, prefetch_factor=2)
 
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
+
 
 runner = Runner(
     model=asr_model,
