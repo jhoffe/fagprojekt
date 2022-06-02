@@ -15,10 +15,10 @@ def batch_cer(ref_batch, hyp_batch, return_error=True, indiBatch=False):
             float: word error rate for the batch
             tuple: number of edits & number of words
     """
-    return batch_error_rate(ref_batch, hyp_batch, list, return_error, individualBatch=indiBatch)
+    return batch_error_rate(ref_batch, hyp_batch, list, return_error)
 
 
-def batch_wer(ref_batch, hyp_batch, return_error=True, indiBatch=False):
+def batch_wer(ref_batch, hyp_batch, return_error=True):
     """
     Compute the wer for a whole batch.
     Args:
@@ -30,7 +30,7 @@ def batch_wer(ref_batch, hyp_batch, return_error=True, indiBatch=False):
             float: word error rate for the batch
             tuple: number of edits & number of words
     """
-    return batch_error_rate(ref_batch, hyp_batch, lambda x: x.split(), return_error, individualBatch=indiBatch)
+    return batch_error_rate(ref_batch, hyp_batch, lambda x: x.split(), return_error)
 
 
 def error_rate(ref, hyp, return_error):
@@ -48,7 +48,7 @@ def error_rate(ref, hyp, return_error):
     return edits / len_ref if return_error else (edits, len_ref)
 
 
-def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error, individualBatch=False):
+def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error):
     """
     Compute the error rate for a whole batch.
     Args:
@@ -64,19 +64,19 @@ def batch_error_rate(ref_batch, hyp_batch, tokenizer, return_error, individualBa
     refs = map(tokenizer, ref_batch)
     hyps = map(tokenizer, hyp_batch)
     edits, N = np.sum([error_rate(ref, hyp, return_error=False) for ref, hyp in zip(refs, hyps)], axis=0)
-    if individualBatch:
-        error_vector = [error_rate(ref, hyp, return_error=False) for ref, hyp in zip(refs, hyps)]
-        return error_vector, float(N)
-    else:
-        return edits / N if return_error else (edits, float(N))
+    return edits / N if return_error else (edits, float(N))
 
 
-def batch_sample_stats(ref_batch, hyp_batch, tokenizer=lambda x: x.split()):
+def individual_batch_wer(ref_batch, hyp_batch, tokenizer=lambda x: x.split()):
     refs = map(tokenizer, ref_batch)
     hyps = map(tokenizer, hyp_batch)
+    return [error_rate(ref, hyp, return_error=True) for ref, hyp in zip(refs, hyps)]
 
-    edits = [editdistance.eval(ref, hyp) for ref, hyp in zip(refs, hyps)]
-    len_ref = len(ref)
+
+def individual_batch_cer(ref_batch, hyp_batch, tokenizer=lambda x: x.split()):
+    refs = map(tokenizer, ref_batch)
+    hyps = map(tokenizer, hyp_batch)
+    return [error_rate(ref, hyp, return_error=True) for ref, hyp in zip(refs, hyps)]
 
 
 class ErrorRateTracker():
@@ -94,23 +94,32 @@ class ErrorRateTracker():
         self.precision = precision
         self.name = name or ('WER' if word_based else 'CER')
         self.current = 0
+        self.current_batch_errors = None
         self.reset()  # all attributes are defined in reset
 
-    def update(self, ref_batch, hyp_batch):
+    def update(self, ref_batch, hyp_batch, with_individual=False):
         """
         Updates the error rate.
 
         Args:
             ref_batch (list): The reference strings.
             hyp_batch (list): The hypothesis strings.
+            with_individual (bool): Whether to save the individual errors
         """
         batch_func = batch_wer if self.word_based else batch_cer
         edits_batch, length_batch = batch_func(ref_batch, hyp_batch, return_error=False)
+
+        if with_individual:
+            self.current_batch_errors = self.calc_batch(ref_batch, hyp_batch)
 
         self.edits += edits_batch
         self.length += length_batch
         self.current = edits_batch / length_batch
         self.running = self.edits / self.length
+
+    def calc_batch(self, ref_batch, hyp_batch):
+        batch_func = individual_batch_wer if self.word_based else individual_batch_cer
+        return batch_func(ref_batch, hyp_batch)
 
     def reset(self):
         """
@@ -139,18 +148,23 @@ class LossTracker():
         self.precision = precision
         self.name = name or 'Loss'
         self.current = 0
+        self.current_batch_errors = None
         self.reset()  # all attributes are defined in reset
 
-    def update(self, loss_batch, weight=None):
+    def update(self, loss_batch, weight=None, with_individual=False):
         """
         Updates the error rate.
 
         Args:
             loss_batch (float or list): If list, the length will be used to infer the weight.
             weight (int): Weight given to the batch update (eg., batch size).
+            with_individual (bool): Whether to save the individual sample errors.
         """
         if isinstance(loss_batch, torch.Tensor):
             loss_batch = loss_batch.detach().cpu().numpy()
+
+        if with_individual:
+            self.current_batch_errors = self.calc_batch(loss_batch, weight)
 
         valid_types = (float, np.float16, np.float32, np.float64, np.float128)
         if isinstance(loss_batch, valid_types):
@@ -164,6 +178,12 @@ class LossTracker():
         wt = w0 + w1
         self.running = l0 * (w0 / wt) + l1 * (w1 / wt)
         self.weight_sum = wt
+
+    def calc_batch(self, loss_batch, weight=None):
+        if isinstance(loss_batch, torch.Tensor):
+            loss_batch = loss_batch.detach().cpu().numpy()
+
+        return loss_batch
 
     def reset(self):
         """

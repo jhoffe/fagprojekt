@@ -24,7 +24,7 @@ preprocessor = [spec_preprocessor, text_preprocessor]
 val_dataset = BaseDataset(source=VAL_SOURCE, preprocessor=preprocessor, sort_by=0)
 
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
-                        batch_size=16)
+                        batch_size=32)
 
 asr_model = ASRModel(dropout=0.05).cuda() # For CPU: remove .cuda()
 model_parameters = torch.load(MODEL_PATH)
@@ -43,4 +43,8 @@ runner = Runner(
     val_loader=val_loader
 )
 
-runner.validate()
+analysis = runner.validate(analysis=True)
+
+#analysis.preprocess().plot()
+
+#analysis.df.to_csv("test.csv")
