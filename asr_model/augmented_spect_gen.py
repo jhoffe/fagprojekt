@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     TRAIN_DATASET_PATH = os.environ['TRAIN_DATASET']
     CPU_CORES = int(os.environ['CPU_CORES'])
-    SHOULD_AUGMENT = bool(os.environ["SHOULD_AUGMENT"])
+    SHOULD_AUGMENT = int(os.environ["SHOULD_AUGMENT"]) == 1
 
     train_dataset = BaseDataset(source=TRAIN_DATASET_PATH, preprocessor=[], sort_by=0)
 
