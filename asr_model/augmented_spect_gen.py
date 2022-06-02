@@ -73,9 +73,9 @@ class AugmentedSpectrogramGenerator:
 
         spect = spectrogram.astype(np.float32)
 
-        spec_freq_mask = SpecCompose([SpecFrequencyMask(p=0.98)])
-
-        spect = spec_freq_mask(spect)
+        if self.should_augment:
+            spec_freq_mask = SpecCompose([SpecFrequencyMask(p=0.98)])
+            spect = spec_freq_mask(spect)
 
         save_path, _ext = os.path.splitext(path)
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     train_dataset = BaseDataset(source=TRAIN_DATASET_PATH, preprocessor=[], sort_by=0)
 
-    spect_gen = AugmentedSpectrogramGenerator()
+    spect_gen = AugmentedSpectrogramGenerator(should_augment=True)
 
     with tqdm(total=len(train_dataset), desc="Generating spectrograms") as pbar:
         with Pool(int(os.environ["CPU_CORES"])) as p:
