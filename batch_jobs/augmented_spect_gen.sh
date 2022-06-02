@@ -23,5 +23,6 @@ source fagprojekt-env/bin/activate
 
 export TRAIN_DATASET="asr_model/data/librispeech/synthetic-train.txt"
 export CPU_CORES=32
+export SHOULD_AUGMENT=1
 
 python3 asr_model/augmented_spect_gen.py
