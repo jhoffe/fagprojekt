@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 import torch
 import random
 import numpy
+import wandb
 
 TRAIN_DATASET_PATH = os.environ['TRAIN_DATASET']
 VAL_DATASET_PATH = os.environ['TEST_DATASET']
@@ -56,6 +57,7 @@ val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, col
 
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
 
+LR = 3e-4
 
 runner = Runner(
     model=asr_model,
@@ -64,7 +66,19 @@ runner = Runner(
     val_loader=val_loader,
     stat_path=RESULTS_PATH,
     models_path=MODELS_OUTPUT_PATH,
-    validate_every=2000
+    validate_every=2000,
+    lr=LR
 )
 
+run = wandb.init(project="asr", entity="fagprojekt-synthetic-asr", reinit=True, config={
+            "lr": LR,
+            "batch_size": BATCH_SIZE,
+            "seed": SEED
+        })
+
+run.name = f"{NAME}-{run.id}"
+
 runner.train()
+
+run.finish()
+

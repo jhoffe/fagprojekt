@@ -1,4 +1,6 @@
 import csv
+import wandb
+
 
 class StatTracker:
     def __init__(self, columns, output_file):
@@ -14,6 +16,8 @@ class StatTracker:
     def track(self, stat):
         assert len(stat) == len(self.columns)
         self.stats.append(stat)
+
+        wandb.log({col: val for col, val in zip(self.columns, stat)})
 
         self.i += 1
 

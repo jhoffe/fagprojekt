@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import wandb
 
 from asr.utils.training import batch_to_tensor, Logger
 from asr.utils.text import greedy_ctc
@@ -83,57 +84,52 @@ class ValidationAnalysis:
 
     def plot(self):
         #WER/Stopword
-        plt.figure()
+        wer_stopword = plt.figure()
         plt.scatter(self.df["StopWordCount"], self.df["WER"])
         plt.suptitle("WER and stop word count")
 
         plt.xlabel("stop words")
         plt.ylabel("WER")
 
-        plt.show()
-
         # WER/wordcounts
-        plt.figure()
+        wer_wordcounts = plt.figure()
         plt.scatter(self.df["WordCount"], self.df["WER"])
         plt.suptitle("WER and word count")
 
         plt.xlabel("stop words")
         plt.ylabel("WER")
 
-        plt.show()
-
         # Stopword counts histograms
-        plt.figure()
+        stopword_hist = plt.figure()
         sns.histplot(data=self.df["StopWordCount"])
-        plt.show()
 
         # word counts histograms
-        plt.figure()
+        wordcount_hist = plt.figure()
         sns.histplot(data=self.df["WordCount"])
-        plt.show()
 
         # WER histograms
-        plt.figure()
+        wer_hist = plt.figure()
         sns.histplot(data=self.df["WER"])
-        plt.show()
 
         # CER histograms
-        plt.figure()
+        cer_hist = plt.figure()
         sns.histplot(data=self.df["CER"])
-        plt.show()
+
+        return wer_stopword, wer_wordcounts, stopword_hist, wordcount_hist, wer_hist, cer_hist
 
 
 
 class Runner:
     def __init__(self, model, name, train_loader=None, val_loader=None, stat_path="asr_model/results/",
                  models_path=None,
-                 validate_every=15000):
+                 validate_every=15000,
+                 lr=3e-4):
         self.model = model
         self.name = name
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         self.lr_scheduler = CosineAnnealingLR(self.optimizer, T_max=100, eta_min=5e-5)
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
@@ -233,6 +229,7 @@ class Runner:
         return self
 
     def train(self):
+        wandb.watch(self.model)
         self.model.train()
         for i, (batch, _) in enumerate(self.train_logger(self.train_loader)):
             loss, _, _ = self.forward_pass(batch)
@@ -246,8 +243,24 @@ class Runner:
             self._track_train_stats(i)
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
-                self.validate(i)
+                analysis = self.validate(i, analysis=True)
+
+                table = wandb.Table(dataframe=analysis.preprocess().df)
                 wer = self.val_logger.metric_trackers[1].running
+
+                wer_stopword, wer_wordcounts, stopword_hist, wordcount_hist, wer_hist, cer_hist = analysis.plot()
+
+                wandb.log({
+                    "validation_table": table,
+                    "WER": wer,
+                    "WER_stopword": wer_stopword,
+                    "WER_wordcounts": wer_wordcounts,
+                    "stopword_hist": stopword_hist,
+                    "wordcount_hist": wordcount_hist,
+                    "wer_hist": wer_hist,
+                    "cer_hist": cer_hist
+                })
+
                 if wer < self.best_wer:
                     self.save()
                     self.best_wer = wer
