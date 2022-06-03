@@ -253,12 +253,12 @@ class Runner:
                 wandb.log({
                     "validation_table": table,
                     "WER": wer,
-                    "WER_stopword": wer_stopword,
-                    "WER_wordcounts": wer_wordcounts,
-                    "stopword_hist": stopword_hist,
-                    "wordcount_hist": wordcount_hist,
-                    "wer_hist": wer_hist,
-                    "cer_hist": cer_hist
+                    "WER_stopword": wandb.Image(wer_stopword),
+                    "WER_wordcounts": wandb.Image(wer_wordcounts),
+                    "stopword_hist": wandb.Image(stopword_hist),
+                    "wordcount_hist": wandb.Image(wordcount_hist),
+                    "wer_hist": wandb.Image(wer_hist),
+                    "cer_hist": wandb.Image(cer_hist)
                 })
 
                 if wer < self.best_wer:
