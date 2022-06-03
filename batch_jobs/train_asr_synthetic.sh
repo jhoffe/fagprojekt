@@ -34,5 +34,6 @@ export BATCH_SIZE=16
 export RESULTS_PATH="asr_model/results"
 export NAME="synthetic"
 export CPU_CORES=16
+export FORMAT="SPEC"
 
 python3 asr_model/experiment_uniform_batching.py
