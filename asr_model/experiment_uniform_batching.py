@@ -19,7 +19,7 @@ BATCH_SIZE = int(os.environ['BATCH_SIZE'])
 RESULTS_PATH = os.environ['RESULTS_PATH']
 NAME = os.environ['NAME']
 CPU_CORES = int(os.environ['CPU_CORES'])
-FORMAT = os.environ["FORMAT"]
+LOAD_SPECTROGRAMS = int(os.environ["LOAD_SPECTROGRAMS"])
 
 assert TRAIN_UPDATES > 0
 assert BATCH_SIZE > 0
@@ -31,7 +31,7 @@ numpy.random.seed(SEED)
 
 text_preprocessor = TextPreprocessor()
 
-if FORMAT == "SPEC":
+if LOAD_SPECTROGRAMS == 1:
     train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
                                                       should_augment=True, skip_spec=True)
 else:

@@ -34,6 +34,6 @@ export BATCH_SIZE=16
 export RESULTS_PATH="asr_model/results"
 export NAME="mixed"
 export CPU_CORES=16
-export FORMAT="SPEC"
+export LOAD_SPECTROGRAMS=1
 
 python3 asr_model/experiment_uniform_batching.py
