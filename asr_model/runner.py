@@ -174,7 +174,7 @@ class Runner:
         loss = self.loss(log_probs, y, output_sl, y_sl)
 
         if loss > 100000:
-            return None
+            return None, None, None
 
         hyp_encoded_batch = greedy_ctc(logits, output_sl)
         hyp_batch = self.text_preprocessor.decode_batch(hyp_encoded_batch)
