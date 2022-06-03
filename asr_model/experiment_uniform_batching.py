@@ -31,18 +31,18 @@ numpy.random.seed(SEED)
 
 text_preprocessor = TextPreprocessor()
 
-train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
-                                                      should_augment=True)
+if FORMAT == "SPEC":
+    train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
+                                                      should_augment=True, skip_spec=True)
+else:
+    train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
+                                                      should_augment=True, skip_spec=True)
+
 val_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
                                                     should_augment=False)
 
 val_preprocessor = [val_spec_preprocessor, text_preprocessor]
-
-if FORMAT == "SPEC":
-    train_preprocessor = [text_preprocessor]
-
-else:
-    train_preprocessor = [train_spec_preprocessor, text_preprocessor]
+train_preprocessor = [train_spec_preprocessor, text_preprocessor]
 
 train_dataset = BaseDataset(source=TRAIN_DATASET_PATH, preprocessor=train_preprocessor, sort_by=0)
 val_dataset = BaseDataset(source=VAL_DATASET_PATH, preprocessor=val_preprocessor, sort_by=0)

@@ -10,7 +10,7 @@ from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
 class SpectrogramPreprocessor():
 
     def __init__(self, ext='.flac', sample_rate=22050, window_size=0.02, stride=0.01, power_spectrum=True, num_mels=80,
-                 logscale=True, normalize=True, frq_bin=True, output_format='NFHT', should_augment=False):
+                 logscale=True, normalize=True, frq_bin=True, output_format='NFHT', should_augment=False, skip_spec = False):
         """
         Converts PCM-based files to spectrograms.
 
@@ -40,6 +40,7 @@ class SpectrogramPreprocessor():
         self.frq_bin = frq_bin
         self.output_format = output_format
         self.should_augment = should_augment
+        self.skip = skip_spec
 
         self.mel_basis = None if num_mels is None else \
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
@@ -54,7 +55,7 @@ class SpectrogramPreprocessor():
 
         return augmenter(samples=sample, sample_rate=self.sample_rate)
 
-    def __call__(self, path):
+    def __call__(self, path, skip = False):
         """
         Loads a PCM-based audio file and transforms the PCM signal to a spectrogram.
 
@@ -64,6 +65,9 @@ class SpectrogramPreprocessor():
         Returns:
             np.ndarray: A spectrogram of shape (F/H)T.
         """
+        if self.skip:
+            spec = np.load(file=path+".npz", allow_pickle=True)
+            return spec
 
         if not path.endswith(self.ext):
             path = path + self.ext
