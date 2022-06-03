@@ -10,7 +10,7 @@ from asr.utils.text import LIBRISPEECH_CTC_ALPHABET, clean_librispeech
 class SpectrogramPreprocessor():
 
     def __init__(self, ext='.flac', sample_rate=22050, window_size=0.02, stride=0.01, power_spectrum=True, num_mels=80,
-                 logscale=True, normalize=True, frq_bin=True, output_format='NFHT', should_augment=False, skip_spec = False):
+                 logscale=True, normalize=True, frq_bin=True, output_format='NFHT', should_augment=False, skip_spec=False):
         """
         Converts PCM-based files to spectrograms.
 
@@ -66,8 +66,8 @@ class SpectrogramPreprocessor():
             np.ndarray: A spectrogram of shape (F/H)T.
         """
         if self.skip:
-            spec = np.load(file=path+".npz", allow_pickle=True)
-            return spec
+            with np.load(file=path+".spect.npz", allow_pickle=True) as file:
+                return file["arr_0"]
 
         if not path.endswith(self.ext):
             path = path + self.ext

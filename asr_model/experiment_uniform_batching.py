@@ -36,7 +36,7 @@ if FORMAT == "SPEC":
                                                       should_augment=True, skip_spec=True)
 else:
     train_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
-                                                      should_augment=True, skip_spec=True)
+                                                      should_augment=True)
 
 val_spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac",
                                                     should_augment=False)
