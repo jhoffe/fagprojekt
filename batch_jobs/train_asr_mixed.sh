@@ -2,7 +2,7 @@
 #BSUB -J train_asr_mixed
 #BSUB -o batch_jobs/logs/train_asr_mixed_%J.out
 #BSUB -e batch_jobs/logs/train_asr_mixed_%J.err
-#BSUB -q gpuv100
+#BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 16
 #BSUB -R "rusage[mem=4G]"
