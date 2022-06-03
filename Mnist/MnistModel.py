@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import os
 
-MnistDataset = torchvision.datasets.ImageNet('path/to/imagenet_root/')
+
 MnistDataset = torchvision.datasets.MNIST()
 
 data_loader = torch.utils.data.DataLoader(MnistDataset,
