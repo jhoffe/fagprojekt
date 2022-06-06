@@ -1,11 +1,12 @@
 import os
 import torch
 import torchvision
+import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 
-
+### Trainingset[index][picture(0) or label(1)][1, 28, 28]
 cwd = os.getcwd()
 MnistDataset_training = torchvision.datasets.MNIST(root="{}\Data".format(os.getcwd()), download=True, train=True, transform=ToTensor())
 MnistDataset_testing = torchvision.datasets.MNIST(root="{}\Data".format(os.getcwd()), download=True, train=False, transform=ToTensor())
@@ -19,8 +20,13 @@ class MnistDataset(Dataset):
                                                            train=True, transform=transform)
         self.TestingSet = torchvision.datasets.MNIST(root="{}\Data".format(os.getcwd()), download=True,
                                                           train=False, transform=transform)
+
+        self.NoisyTrainingSet = torch.zeros([len(self.TrainingSet), 28, 28])
+        self.NoisyTrainingSet = torch.zeros([len(self.TestingSet), 28, 28])
+
+
     def __len__(self):
-        return len(self.TrainingSet), len(self.TestingSet)
+        return (len(self.TrainingSet), len(self.TestingSet))
 
     def __getitem__(self, idx, trainingSet=True):
         image, label = self.TrainingSet[0], self.TrainingSet[1] if(trainingSet) else self.TestingSet[0], self.TestingSet[1]
@@ -39,3 +45,26 @@ class MnistDataset(Dataset):
             plt.imshow(img.squeeze(), cmap="gray")
         plt.show()
 
+    def AddNoise(self):
+        # print(self.TrainingSet[0][0][0][14])
+        ### CREATE A NEW TRAINING AND TEST ARRAY AND ADD THE NOISY PICS TO IT
+        for idx, image in enumerate(self.TrainingSet):
+           NoisyImage = torch.zeros([28, 28], dtype=torch.float32)
+           NoisyImage[0, 0] = 1
+           for i in range(0, 27):
+               for j in range(0, 13):
+                   NoisyImage[i, j] = image[0][0][i][j]
+               for j in range(13, 28):
+                   NoisyImage[i, j] = image[0][0][i][j] + torch.randn(1)*np.sqrt(0.1)
+           # image[0][0][0][0:14] += torch.randn(14)*np.sqrt(1)
+           self.NoisyTrainingSet[idx] = NoisyImage
+        for idx, image in enumerate(self.TestingSet):
+           image[0][0][0][0:14] += torch.randn(14)*np.sqrt(1)
+        # print(self.TrainingSet[0][0][0][14])
+
+
+
+MnistDataset()
+MnistDataset().plotExample()
+MnistDataset().AddNoise()
+MnistDataset().plotExample()
