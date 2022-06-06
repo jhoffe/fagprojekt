@@ -37,8 +37,8 @@ class MnistDataset(Dataset):
         cols, rows = 3, 3
         labels_map = {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9"}
         for i in range(1, cols * rows + 1):
-            sample_idx = torch.randint(len(MnistDataset_training), size=(1,)).item()
-            img, label = MnistDataset_training[sample_idx]
+            sample_idx = torch.randint(len(DataSet), size=(1,)).item()
+            img, label = DataSet[sample_idx]
             figure.add_subplot(rows, cols, i)
             plt.title(labels_map[label])
             plt.axis("off")
@@ -49,20 +49,18 @@ class MnistDataset(Dataset):
         for idx, image in enumerate(self.TrainingSet):
            NoisyImage = torch.zeros([28, 28], dtype=torch.float32)
            NoisyImage = image[0][0]
-           for i in range(0, 28):
-               NoisyImage[i, 0:14] = torch.randn(14) * np.sqrt(0.1)
+           NoisyImage[:, 0:14] = torch.randn(28, 14) * np.sqrt(0.1)
            self.NoisyTrainingSet[idx] = NoisyImage
 
         for idx, image in enumerate(self.TestingSet):
            NoisyImage = torch.zeros([28, 28], dtype=torch.float32)
            NoisyImage = image[0][0]
-           for i in range(0, 28):
-               NoisyImage[i, 0:14] = torch.randn(14) * np.sqrt(0.1)
+           NoisyImage[:, 0:14] = torch.randn(28, 14) * np.sqrt(0.1)
            self.NoisyTestingSet[idx] = NoisyImage
 
 
 MnistInstance = MnistDataset()
-# MnistInstance.plotExample()
+MnistInstance.plotExample()
 MnistInstance.AddNoise()
 # MnistInstance.plotExample(DataSet=MnistInstance.NoisyTrainingSet)
 
