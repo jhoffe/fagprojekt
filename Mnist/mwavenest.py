@@ -47,7 +47,8 @@ class CausalModel(nn.Module):
             nn.Conv1d(input_size, output_size, kernel_size=1, stride=1, bias=False)
         )
 
-    def forward(self, x):
+    def forward(self, batch):
+        x, target = batch
         x = self.flatten(x)
         pred = self.conv_stack(x)
         loss = nn.MSELoss(reduction='mean')
