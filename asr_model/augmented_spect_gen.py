@@ -34,10 +34,10 @@ class AugmentedSpectrogramGenerator:
 
     def augment(self, sample):
         augmenter = Compose([
-            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.003, p=1),
-            TimeStretch(min_rate=0.9, max_rate=1.25, p=0.9),
-            PitchShift(min_semitones=-12, max_semitones=12, p=0.98)
-        ], p=0.995)
+            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.004, p=1),
+            TimeStretch(min_rate=0.75, max_rate=1.2, p=0.95),
+            PitchShift(min_semitones=-5, max_semitones=6, p=0.995)
+        ], p=0.997)
 
         return augmenter(samples=sample, sample_rate=self.sample_rate)
 

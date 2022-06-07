@@ -57,7 +57,7 @@ val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, col
 
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
 
-LR = 3e-4
+LR = 3e-3
 
 runner = Runner(
     model=asr_model,

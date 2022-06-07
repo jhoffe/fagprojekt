@@ -11,7 +11,7 @@ from asr.data.preprocessors import TextPreprocessor
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from nltk.corpus import stopwords
 import nltk
 import os
@@ -130,7 +130,7 @@ class Runner:
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        self.lr_scheduler = CosineAnnealingLR(self.optimizer, T_max=100, eta_min=5e-5)
+        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4, factor=0.5)
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
         self.models_path = models_path
@@ -231,7 +231,8 @@ class Runner:
     def train(self):
         wandb.watch(self.model)
         self.model.train()
-        for i, (batch, _) in enumerate(self.train_logger(self.train_loader)):
+        train_logger = self.train_logger(self.train_loader)
+        for i, (batch, _) in enumerate(train_logger):
             loss, _, _ = self.forward_pass(batch)
             if loss is None:
                 continue
@@ -241,6 +242,9 @@ class Runner:
             # self.lr_scheduler.step()
 
             self._track_train_stats(i)
+
+            if (i + 1) % (self.train_logger.total // 10):
+                self.lr_scheduler.step(loss)
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
                 analysis = self.validate(i, analysis=True)
