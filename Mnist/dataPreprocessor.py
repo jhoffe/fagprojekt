@@ -52,25 +52,23 @@ class MnistDataset(Dataset):
            NoisyImage[:, 0:14] = torch.randn(28, 14) * np.sqrt(0.1)
            self.NoisyTrainingSet[idx] = NoisyImage
 
-        for idx, image in enumerate(self.TestingSet):
-           NoisyImage = torch.zeros([28, 28], dtype=torch.float32)
-           NoisyImage = image[0][0]
-           NoisyImage[:, 0:14] = torch.randn(28, 14) * np.sqrt(0.1)
-           self.NoisyTestingSet[idx] = NoisyImage
+        # for idx, image in enumerate(self.TestingSet):
+        #   NoisyImage = torch.zeros([28, 28], dtype=torch.float32)
+        #   NoisyImage = image[0][0]
+        #   NoisyImage[:, 0:14] = torch.randn(28, 14) * np.sqrt(0.1)
+        #   self.NoisyTestingSet[idx] = NoisyImage
 
-
-MnistInstance = MnistDataset()
-MnistInstance.plotExample()
-MnistInstance.AddNoise()
+#### USE THE FOLLOWING LINES FOR TESTING THE CLASS
+# MnistInstance = MnistDataset()
+# MnistInstance.plotExample()
+# MnistInstance.AddNoise()
 # MnistInstance.plotExample(DataSet=MnistInstance.NoisyTrainingSet)
 
+# figure = plt.figure()
+# imgOriginal, labelOriginal = MnistDataset_training[0]
+# imgNoisy = MnistInstance.NoisyTrainingSet[0]
+# plt.imshow(imgOriginal.squeeze(), cmap="gray")
+# plt.show()
 
-figure = plt.figure()
-imgOriginal, labelOriginal = MnistDataset_training[0]
-imgNoisy = MnistInstance.NoisyTrainingSet[0]
-plt.imshow(imgOriginal.squeeze(), cmap="gray")
-plt.show()
-
-plt.imshow(imgNoisy.squeeze(), cmap="gray")
-plt.show()
-
+# plt.imshow(imgNoisy.squeeze(), cmap="gray")
+# plt.show()
