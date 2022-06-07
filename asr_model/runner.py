@@ -130,7 +130,7 @@ class Runner:
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4)
+        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4, factor=0.5)
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
         self.models_path = models_path
