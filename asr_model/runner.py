@@ -243,7 +243,7 @@ class Runner:
 
             self._track_train_stats(i)
 
-            if (i + 1) % (len(train_logger) // 10):
+            if (i + 1) % (self.train_logger.total // 10):
                 self.lr_scheduler.step(loss)
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
