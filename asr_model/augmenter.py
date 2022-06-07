@@ -54,11 +54,10 @@ pitch_shift_params = {
 # }
 
 augmenter = Compose([
-    AddGaussianNoise(**noise_params),
-    TimeStretch(**time_stretch_params),
-    PitchShift(**pitch_shift_params),
-    FrequencyMask(p=1)
-], p=0.95)
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.004, p=1),
+    TimeStretch(min_rate=0.75, max_rate=1.2, p=0.95),
+    PitchShift(min_semitones=-5, max_semitones=6, p=0.995)
+], p=0.997)
 
 def augment(batch):
     _examples, paths = batch
