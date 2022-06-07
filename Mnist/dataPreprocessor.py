@@ -24,9 +24,8 @@ class MnistDataset(Dataset):
         self.NoisyTrainingSet = torch.zeros([len(self.TrainingSet), 28, 28])
         self.NoisyTestingSet = torch.zeros([len(self.TestingSet), 28, 28])
 
-        ### NOTE: Good idea to add noise in the init function
-        self.AddNoise()
-
+        ### NOTE: Comment the following line out to increase the speed while debugging
+        # self.AddNoise()
 
     def __len__(self):
         return (len(self.TrainingSet), len(self.TestingSet))
