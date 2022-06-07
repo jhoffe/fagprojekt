@@ -130,7 +130,7 @@ class Runner:
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4, factor=0.5)
+        #self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4, factor=0.5) # didnt work as intended
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
         self.models_path = models_path
@@ -243,8 +243,8 @@ class Runner:
 
             self._track_train_stats(i)
 
-            if (i + 1) % (self.train_logger.total // 10):
-                self.lr_scheduler.step(loss)
+            #if (i + 1) % (self.train_logger.total // 10):
+            #    self.lr_scheduler.step(loss) didnt work as intended
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
                 analysis = self.validate(i, analysis=True)
