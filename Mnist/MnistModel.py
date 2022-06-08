@@ -119,6 +119,7 @@ if __name__ == "__main__":
 
         yh = model.forward(x)
         loss = loss_fn(y, yh)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
