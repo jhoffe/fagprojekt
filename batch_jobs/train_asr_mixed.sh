@@ -29,8 +29,8 @@ source fagprojekt-env/bin/activate
 export TRAIN_DATASET="asr_model/data/librispeech/mixed-train.txt"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt"
 export MODELS_PATH="asr_model/models"
-export TRAIN_UPDATES=250000
-export BATCH_SIZE=32
+export TRAIN_UPDATES=200000
+export BATCH_SIZE=64
 export RESULTS_PATH="asr_model/results"
 export NAME="mixed"
 export CPU_CORES=16
