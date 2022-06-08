@@ -4,13 +4,11 @@ import torch
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-
-MnistDataset = torchvision.datasets.MNIST()
-
-data_loader = torch.utils.data.DataLoader(MnistDataset,
-                                          batch_size=4,
-                                          shuffle=True)
-
+from torch.nn import MSELoss
+from torch.optim import Adam
+from tqdm import tqdm
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
 
 class CausalConv1d(nn.Conv1d):
     def __init__(self,
@@ -58,3 +56,51 @@ class CausalModel(nn.Module):
         x = F.relu(self.end_conv1d.forward(x))
 
         return x
+
+
+class UniformBatchSampler:
+    def __init__(self, dataset_size: int, num_steps: int, batch_size: int, seed=None):
+        np.random.seed(seed)
+        self.num_steps = num_steps
+        self.batch_size = batch_size
+        self.dataset_size = dataset_size
+        self.world = np.arange(self.dataset_size)
+
+    def __iter__(self):
+        for _ in range(self.__len__()):
+            batch = np.random.choice(self.world, self.batch_size, replace=False).tolist()
+            yield batch
+
+    def __len__(self) -> int:
+        return self.num_steps
+
+
+if __name__ == "__main__":
+    SEED = 42
+    TRAIN_UPDATES = 50000
+    BATCH_SIZE = 16
+
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+         transforms.Normalize((0,), (1,))])
+
+    MnistDataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=transform, download=True)
+    batch_sampler = UniformBatchSampler(len(MnistDataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
+    data_loader = DataLoader(MnistDataset, batch_sampler=batch_sampler)
+
+    model = CausalModel()
+    optimizer = Adam(lr=1e-3, params=model.parameters())
+    loss_fn = MSELoss()
+
+    pbar = tqdm(data_loader)
+
+    running_mse = 0
+    running_acc = 0
+
+    for batch in pbar:
+        y = model.forward(batch)
+        loss = loss_fn(batch, y)
+        loss.backward()
+        optimizer.step()
+
+        pbar.set_description(desc=f"MSE={loss}")
