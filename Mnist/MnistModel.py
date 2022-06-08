@@ -88,7 +88,7 @@ def batch_to_tensor(batch, device='cuda'):
 
 if __name__ == "__main__":
     SEED = 42
-    TRAIN_UPDATES = 30000
+    TRAIN_UPDATES = 100
     BATCH_SIZE = 32
     LR = 6e-4
     DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
@@ -125,24 +125,24 @@ if __name__ == "__main__":
         pbar.set_description(desc=f"Training: MSE={loss}")
 
     model.eval()
-    for (batch, _) in val_dataloader:
+    for i, (batch, _) in enumerate(val_dataloader):
         x = transform_input(batch).to(device=DEVICE)
         y = transform_output(batch).to(device=DEVICE)
         yh = model.forward(x)
 
-        xt = x[0, :].resize((28, 28))
-        yt = y[0, :].resize((28, 28))
-        yht = yh[0, :].resize((28, 28))
+        for j in range(BATCH_SIZE):
+            xt = x[j, :].reshape((28, 28)).cpu().detach().numpy()
+            yt = y[j, :].reshape((28, 28)).cpu().detach().numpy()
+            yht = yh[j, :].reshape((28, 28)).cpu().detach().numpy()
 
-        fig, axs = plt.subplots(1, 3)
+            fig, axs = plt.subplots(1, 3)
 
-        axs[0].imshow(xt)
-        axs[0].title.set_text("Occluded original")
-        axs[1].imshow(yt)
-        axs[1].title.set_text("Real original")
-        axs[2].imshow(yht)
-        axs[2].title.set_text("Our guess")
+            axs[0].imshow(xt)
+            axs[0].title.set_text("Occluded original")
+            axs[1].imshow(yt)
+            axs[1].title.set_text("Real original")
+            axs[2].imshow(yht)
+            axs[2].title.set_text("Our guess")
 
-        fig.save("mnist_example.png")
-
-        break
+            fig.savefig(f"Mnist/examples/mnist_example_{i}_{j}.png")
+            close(fig)
