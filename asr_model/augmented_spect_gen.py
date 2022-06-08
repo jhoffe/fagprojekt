@@ -73,10 +73,6 @@ class AugmentedSpectrogramGenerator:
 
         spect = spectrogram.astype(np.float32)
 
-        if self.should_augment:
-            spec_freq_mask = SpecCompose([SpecFrequencyMask(p=0.98)])
-            spect = spec_freq_mask(spect)
-
         save_path, _ext = os.path.splitext(path)
 
         np.savez_compressed(f"{save_path}.spect", spect, allow_pickle=True)
