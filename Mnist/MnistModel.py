@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 import torch
@@ -90,6 +92,7 @@ if __name__ == "__main__":
     BATCH_SIZE = 32
     LR = 6e-4
     DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
+    CPU_CORES = int(os.environ['CPU_CORES'])
 
     default_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0, 1)])
 
@@ -101,7 +104,7 @@ if __name__ == "__main__":
     train_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform, download=True)
     val_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=False, transform=default_transform, download=True)
     batch_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
-    train_dataloader = DataLoader(train_dataset, batch_sampler=batch_sampler)
+    train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_sampler=batch_sampler)
     val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
     model = CausalModel().to(device=DEVICE)
