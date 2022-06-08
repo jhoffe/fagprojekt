@@ -88,7 +88,7 @@ def batch_to_tensor(batch, device='cuda'):
 
 if __name__ == "__main__":
     SEED = 42
-    TRAIN_UPDATES = 100
+    TRAIN_UPDATES = 30000
     BATCH_SIZE = 32
     LR = 6e-4
     DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
@@ -145,4 +145,4 @@ if __name__ == "__main__":
             axs[2].title.set_text("Our guess")
 
             fig.savefig(f"Mnist/examples/mnist_example_{i}_{j}.png")
-            close(fig)
+            plt.close(fig)
