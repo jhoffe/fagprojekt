@@ -10,6 +10,7 @@ from tqdm import tqdm
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
+
 class CausalConv1d(nn.Conv1d):
     def __init__(self,
                  in_channels,
@@ -46,7 +47,8 @@ class CausalModel(nn.Module):
 
         super(CausalModel, self).__init__()
 
-        self.causal_conv = CausalConv1d(in_channels=input_size, out_channels=output_size, kernel_size=kernel_size, bias=bias)
+        self.causal_conv = CausalConv1d(in_channels=input_size, out_channels=output_size, kernel_size=kernel_size,
+                                        bias=bias)
         self.end_conv1d = nn.Conv1d(in_channels=input_size, out_channels=output_size, kernel_size=1, bias=True)
 
     def forward(self, x):
@@ -55,7 +57,7 @@ class CausalModel(nn.Module):
 
         x = F.relu(self.end_conv1d.forward(x))
 
-        return x
+        return x.squeeze()
 
 
 class UniformBatchSampler:
@@ -75,31 +77,42 @@ class UniformBatchSampler:
         return self.num_steps
 
 
+def batch_to_tensor(batch, device='cuda'):
+    if isinstance(batch, list):
+        return [batch_to_tensor(x, device=device) for x in batch]
+    else:
+        return torch.from_numpy(batch).to(device)
+
+
 if __name__ == "__main__":
     SEED = 42
     TRAIN_UPDATES = 50000
     BATCH_SIZE = 16
+    DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
 
-    transform = transforms.Compose(
-        [transforms.ToTensor(),
-         transforms.Normalize((0,), (1,))])
+    default_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0, 1)])
 
-    MnistDataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=transform, download=True)
+    transform_input = transforms.Compose(
+        [transforms.RandomErasing(p=1, scale=(0.1, 0.4)),
+         transforms.Lambda(lambda x: x.flatten(start_dim=1))])
+    transform_output = transforms.Compose([transforms.Lambda(lambda x: x.flatten(start_dim=1))])
+
+    MnistDataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform, download=True)
     batch_sampler = UniformBatchSampler(len(MnistDataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
     data_loader = DataLoader(MnistDataset, batch_sampler=batch_sampler)
 
-    model = CausalModel()
+    model = CausalModel().to(device=DEVICE)
     optimizer = Adam(lr=1e-3, params=model.parameters())
     loss_fn = MSELoss()
 
     pbar = tqdm(data_loader)
 
-    running_mse = 0
-    running_acc = 0
+    for (batch, _) in pbar:
+        x = transform_input(batch).to(device=DEVICE)
+        y = transform_output(batch).to(device=DEVICE)
 
-    for batch in pbar:
-        y = model.forward(batch)
-        loss = loss_fn(batch, y)
+        yh = model.forward(x)
+        loss = loss_fn(y, yh)
         loss.backward()
         optimizer.step()
 
