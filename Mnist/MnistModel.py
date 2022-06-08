@@ -9,7 +9,7 @@ from torch.optim import Adam
 from tqdm import tqdm
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-
+import matplotlib.pyplot as plt
 
 class CausalConv1d(nn.Conv1d):
     def __init__(self,
@@ -86,8 +86,9 @@ def batch_to_tensor(batch, device='cuda'):
 
 if __name__ == "__main__":
     SEED = 42
-    TRAIN_UPDATES = 50000
-    BATCH_SIZE = 16
+    TRAIN_UPDATES = 30000
+    BATCH_SIZE = 32
+    LR = 6e-4
     DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
 
     default_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0, 1)])
@@ -97,15 +98,17 @@ if __name__ == "__main__":
          transforms.Lambda(lambda x: x.flatten(start_dim=1))])
     transform_output = transforms.Compose([transforms.Lambda(lambda x: x.flatten(start_dim=1))])
 
-    MnistDataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform, download=True)
-    batch_sampler = UniformBatchSampler(len(MnistDataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
-    data_loader = DataLoader(MnistDataset, batch_sampler=batch_sampler)
+    train_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform, download=True)
+    val_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=False, transform=default_transform, download=True)
+    batch_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
+    train_dataloader = DataLoader(train_dataset, batch_sampler=batch_sampler)
+    val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
     model = CausalModel().to(device=DEVICE)
-    optimizer = Adam(lr=1e-3, params=model.parameters())
+    optimizer = Adam(lr=LR, params=model.parameters())
     loss_fn = MSELoss()
 
-    pbar = tqdm(data_loader)
+    pbar = tqdm(train_dataloader)
 
     for (batch, _) in pbar:
         x = transform_input(batch).to(device=DEVICE)
@@ -116,4 +119,27 @@ if __name__ == "__main__":
         loss.backward()
         optimizer.step()
 
-        pbar.set_description(desc=f"MSE={loss}")
+        pbar.set_description(desc=f"Training: MSE={loss}")
+
+    model.eval()
+    for (batch, _) in val_dataloader:
+        x = transform_input(batch).to(device=DEVICE)
+        y = transform_output(batch).to(device=DEVICE)
+        yh = model.forward(x)
+
+        xt = x[0, :].resize((28, 28))
+        yt = y[0, :].resize((28, 28))
+        yht = yh[0, :].resize((28, 28))
+
+        fig, axs = plt.subplots(1, 3)
+
+        axs[0].imshow(xt)
+        axs[0].title.set_text("Occluded original")
+        axs[1].imshow(yt)
+        axs[1].title.set_text("Real original")
+        axs[2].imshow(yht)
+        axs[2].title.set_text("Our guess")
+
+        fig.save("mnist_example.png")
+
+        break
