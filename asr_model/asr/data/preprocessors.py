@@ -55,7 +55,7 @@ class SpectrogramPreprocessor():
 
         return augmenter(samples=sample, sample_rate=self.sample_rate)
 
-    def __call__(self, path, skip = False):
+    def __call__(self, path):
         """
         Loads a PCM-based audio file and transforms the PCM signal to a spectrogram.
 
