@@ -6,7 +6,7 @@ import torch
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import MSELoss
+from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 from tqdm import tqdm
 import torchvision.transforms as transforms
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     model = CausalModel().to(device=DEVICE)
     optimizer = Adam(lr=LR, params=model.parameters())
-    loss_fn = MSELoss()
+    loss_fn = CrossEntropyLoss()
 
     pbar = tqdm(train_dataloader)
 
