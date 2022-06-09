@@ -260,7 +260,7 @@ class CausalModel(nn.Module):
 SEED = 42
 TRAIN_UPDATES = 30000
 BATCH_SIZE = 32
-LR = 3e-5
+LR = 3e-3
 DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
 CPU_CORES = int(os.environ["CPU_CORES"]) if os.getenv("CPU_CORES") is not None else 4
 
