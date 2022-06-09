@@ -73,7 +73,7 @@ def individual_batch_wer(ref_batch, hyp_batch, tokenizer=lambda x: x.split()):
     return [error_rate(ref, hyp, return_error=True) for ref, hyp in zip(refs, hyps)]
 
 
-def individual_batch_cer(ref_batch, hyp_batch, tokenizer=lambda x: x.split()):
+def individual_batch_cer(ref_batch, hyp_batch, tokenizer=list):
     refs = map(tokenizer, ref_batch)
     hyps = map(tokenizer, hyp_batch)
     return [error_rate(ref, hyp, return_error=True) for ref, hyp in zip(refs, hyps)]
