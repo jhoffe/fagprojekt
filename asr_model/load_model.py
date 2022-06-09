@@ -47,7 +47,7 @@ analysis.preprocess()
 
 save_path = f"asr_model/results/analysis-{NAME}/"
 
-analysis.df.to_csv(os.path.join(f"{NAME}.csv"))
+analysis.df.to_csv(os.path.join(save_path, f"{NAME}.csv"))
 wer_stopword, wer_wordcounts, stopword_hist, wordcount_hist, wer_hist, cer_hist = analysis.plot()
 
 if not os.path.exists(save_path):
