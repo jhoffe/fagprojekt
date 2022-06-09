@@ -3,14 +3,12 @@ import os
 from asr.data import BaseDataset
 from asr.data.preprocessors import SpectrogramPreprocessor, TextPreprocessor
 from asr.modules import ASRModel
-from asr.utils.training import batch_to_tensor, Logger
-from asr.utils.text import greedy_ctc
+from asr.utils.training import Logger
 from asr.utils.metrics import ErrorRateTracker, LossTracker
 from runner import Runner
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 VAL_SOURCE = os.environ["TEST_DATASET"]
@@ -26,10 +24,10 @@ val_dataset = BaseDataset(source=VAL_SOURCE, preprocessor=preprocessor, sort_by=
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=32)
 
-asr_model = ASRModel(dropout=0.05).cuda() # For CPU: remove .cuda()
+asr_model = ASRModel(dropout=0.05).cuda()  # For CPU: remove .cuda()
 model_parameters = torch.load(MODEL_PATH)
 asr_model.load_state_dict(model_parameters)
-ctc_loss = nn.CTCLoss(reduction='sum').cuda() # For CPU: remove .cuda()
+ctc_loss = nn.CTCLoss(reduction='sum').cuda()  # For CPU: remove .cuda()
 
 wer_metric = ErrorRateTracker(word_based=True)
 cer_metric = ErrorRateTracker(word_based=False)
@@ -45,6 +43,18 @@ runner = Runner(
 
 analysis = runner.validate(analysis=True)
 
-#analysis.preprocess().plot()
+analysis.preprocess()
+analysis.df.to_csv(f"asr_model/results/analysis_{NAME}.csv")
+wer_stopword, wer_wordcounts, stopword_hist, wordcount_hist, wer_hist, cer_hist = analysis.plot()
 
-#analysis.df.to_csv("test.csv")
+plots_path = f"asr_model/results/{NAME}/"
+
+if not os.path.exists(plots_path):
+    os.mkdir(plots_path)
+
+wer_stopword.savefig(os.path.join(plots_path, "wer_stopword.png"))
+wer_wordcounts.savefig(os.path.join(plots_path, "wer_wordcounts.png"))
+stopword_hist.savefig(os.path.join(plots_path, "stopword_hist.png"))
+wordcount_hist.savefig(os.path.join(plots_path, "wordcount_hist.png"))
+wer_hist.savefig(os.path.join(plots_path, "wer_hist.png"))
+cer_hist.savefig(os.path.join(plots_path, "cer_hist.png"))
