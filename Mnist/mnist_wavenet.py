@@ -80,8 +80,8 @@ class CausalModel(nn.Module):
 
         ch = 256
 
-        self.stacks = 2
-        self.layers = 2
+        self.stacks = 4
+        self.layers = 8
         assert self.layers % self.stacks == 0
         layers_per_stack = self.layers // self.stacks
 
