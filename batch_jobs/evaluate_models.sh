@@ -30,19 +30,19 @@ source fagprojekt-env/bin/activate
 export MODEL="authentic"
 export MODEL_PATH="asr_model/models/asr_model_$MODEL.pt"
 
-export NAME="$MODEL-authentic-test-clean"
+export NAME="$MODEL-on-authentic-test-clean"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-authentic-test-other"
+export NAME="$MODEL-on-authentic-test-other"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-other.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-synthetic-test-clean"
+export NAME="$MODEL-on-synthetic-test-clean"
 export TEST_DATASET="asr_model/data/librispeech/synthetic-test-clean.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-synthetic-test-other"
+export NAME="$MODEL-on-synthetic-test-other"
 export TEST_DATASET="asr_model/data/librispeech/synthetic-test-other.txt"
 python3 asr_model/load_model.py
 
@@ -50,19 +50,19 @@ python3 asr_model/load_model.py
 export MODEL="mixed"
 export MODEL_PATH="asr_model/models/asr_model_$MODEL.pt"
 
-export NAME="$MODEL-authentic-test-clean"
+export NAME="$MODEL-on-authentic-test-clean"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-authentic-test-other"
+export NAME="$MODEL-on-authentic-test-other"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-other.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-synthetic-test-clean"
+export NAME="$MODEL-on-synthetic-test-clean"
 export TEST_DATASET="asr_model/data/librispeech/synthetic-test-clean.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-synthetic-test-other"
+export NAME="$MODEL-on-synthetic-test-other"
 export TEST_DATASET="asr_model/data/librispeech/synthetic-test-other.txt"
 python3 asr_model/load_model.py
 
@@ -70,18 +70,18 @@ python3 asr_model/load_model.py
 export MODEL="synthetic"
 export MODEL_PATH="asr_model/models/asr_model_$MODEL.pt"
 
-export NAME="$MODEL-authentic-test-clean"
+export NAME="$MODEL-on-authentic-test-clean"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-authentic-test-other"
+export NAME="$MODEL-on-authentic-test-other"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-other.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-synthetic-test-clean"
+export NAME="$MODEL-on-synthetic-test-clean"
 export TEST_DATASET="asr_model/data/librispeech/synthetic-test-clean.txt"
 python3 asr_model/load_model.py
 
-export NAME="$MODEL-synthetic-test-other"
+export NAME="$MODEL-on-synthetic-test-other"
 export TEST_DATASET="asr_model/data/librispeech/synthetic-test-other.txt"
 python3 asr_model/load_model.py

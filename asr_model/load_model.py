@@ -44,17 +44,18 @@ runner = Runner(
 analysis = runner.validate(analysis=True)
 
 analysis.preprocess()
-analysis.df.to_csv(f"asr_model/results/analysis_{NAME}.csv")
+
+save_path = f"asr_model/results/analysis-{NAME}/"
+
+analysis.df.to_csv(os.path.join(f"{NAME}.csv"))
 wer_stopword, wer_wordcounts, stopword_hist, wordcount_hist, wer_hist, cer_hist = analysis.plot()
 
-plots_path = f"asr_model/results/{NAME}/"
+if not os.path.exists(save_path):
+    os.mkdir(save_path)
 
-if not os.path.exists(plots_path):
-    os.mkdir(plots_path)
-
-wer_stopword.savefig(os.path.join(plots_path, "wer_stopword.png"))
-wer_wordcounts.savefig(os.path.join(plots_path, "wer_wordcounts.png"))
-stopword_hist.savefig(os.path.join(plots_path, "stopword_hist.png"))
-wordcount_hist.savefig(os.path.join(plots_path, "wordcount_hist.png"))
-wer_hist.savefig(os.path.join(plots_path, "wer_hist.png"))
-cer_hist.savefig(os.path.join(plots_path, "cer_hist.png"))
+wer_stopword.savefig(os.path.join(save_path, "wer_stopword.png"))
+wer_wordcounts.savefig(os.path.join(save_path, "wer_wordcounts.png"))
+stopword_hist.savefig(os.path.join(save_path, "stopword_hist.png"))
+wordcount_hist.savefig(os.path.join(save_path, "wordcount_hist.png"))
+wer_hist.savefig(os.path.join(save_path, "wer_hist.png"))
+cer_hist.savefig(os.path.join(save_path, "cer_hist.png"))
