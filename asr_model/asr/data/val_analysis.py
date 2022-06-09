@@ -86,18 +86,18 @@ class ValidationAnalysis:
 
         # Stopword counts histograms
         stopword_hist = plt.figure()
-        sns.histplot(data=self.df["StopWordCount"])
+        sns.histplot(data=self.df["StopWordCount"], stat="density")
 
         # word counts histograms
         wordcount_hist = plt.figure()
-        sns.histplot(data=self.df["WordCount"])
+        sns.histplot(data=self.df["WordCount"], stat="density")
 
         # WER histograms
         wer_hist = plt.figure()
-        sns.histplot(data=self.df["WER"])
+        sns.histplot(data=self.df["WER"], stat="density")
 
         # CER histograms
         cer_hist = plt.figure()
-        sns.histplot(data=self.df["CER"])
+        sns.histplot(data=self.df["CER"], stat="density")
 
         return wer_stopword, wer_wordcounts, stopword_hist, wordcount_hist, wer_hist, cer_hist
