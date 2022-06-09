@@ -6,12 +6,12 @@ import torch
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import CrossEntropyLoss
+from torch.nn import NLLLoss
 from torch.optim import Adam
 from tqdm import tqdm
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
+
 
 class CausalConv1d(nn.Conv1d):
     def __init__(self,
@@ -49,41 +49,11 @@ class CausalModel(nn.Module):
 
         super(CausalModel, self).__init__()
 
-        self.causal_conv = CausalConv1d(in_channels=input_size, out_channels=output_size, kernel_size=kernel_size,
-                                        bias=bias)
-        self.end_conv1d = nn.Conv1d(in_channels=input_size, out_channels=output_size, kernel_size=1, bias=True)
+        self.causal_conv = CausalConv1d(in_channels=1, out_channels=1, kernel_size=kernel_size, bias=bias)
 
     def forward(self, x):
-        for _ in range(self.layers):
-            x = F.relu(self.causal_conv.forward(x))
-
-        x = F.relu(self.end_conv1d.forward(x))
-
-        return x.squeeze()
 
 
-class UniformBatchSampler:
-    def __init__(self, dataset_size: int, num_steps: int, batch_size: int, seed=None):
-        np.random.seed(seed)
-        self.num_steps = num_steps
-        self.batch_size = batch_size
-        self.dataset_size = dataset_size
-        self.world = np.arange(self.dataset_size)
-
-    def __iter__(self):
-        for _ in range(self.__len__()):
-            batch = np.random.choice(self.world, self.batch_size, replace=False).tolist()
-            yield batch
-
-    def __len__(self) -> int:
-        return self.num_steps
-
-
-def batch_to_tensor(batch, device='cuda'):
-    if isinstance(batch, list):
-        return [batch_to_tensor(x, device=device) for x in batch]
-    else:
-        return torch.from_numpy(batch).to(device)
 
 
 if __name__ == "__main__":
@@ -94,56 +64,36 @@ if __name__ == "__main__":
     DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
     CPU_CORES = int(os.environ['CPU_CORES'])
 
-    default_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0, 1)])
+    default_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(0, 1),
+        transforms.Lambda(lambda x: x.flatten(start_dim=1))
+    ])
+    target_transform = transforms.Compose([
+        transforms.Lambda(lambda x: x > 0.5),
+        transforms.Lambda(lambda x: x.float())
+    ])
 
-    transform_input = transforms.Compose(
-        [transforms.RandomErasing(p=1, scale=(0.1, 0.4)),
-         transforms.Lambda(lambda x: x.flatten(start_dim=1))])
-    transform_output = transforms.Compose([transforms.Lambda(lambda x: x.flatten(start_dim=1))])
-
-    train_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform, download=True)
-    val_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=False, transform=default_transform, download=True)
-    batch_sampler = UniformBatchSampler(len(train_dataset), TRAIN_UPDATES, BATCH_SIZE, seed=SEED)
-    train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_sampler=batch_sampler)
+    train_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform,
+                                               download=True)
+    val_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=False, transform=default_transform,
+                                             download=True)
+    train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_size=BATCH_SIZE)
     val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
-    model = CausalModel().to(device=DEVICE)
-    optimizer = Adam(lr=LR, params=model.parameters())
-    loss_fn = CrossEntropyLoss()
-
-    pbar = tqdm(train_dataloader)
-
-    for (batch, _) in pbar:
-        x = transform_input(batch).to(device=DEVICE)
-        y = transform_output(batch).to(device=DEVICE)
-
-        yh = model.forward(x)
-        loss = loss_fn(y, yh)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        pbar.set_description(desc=f"Training: MSE={loss}")
-
-    model.eval()
-    for i, (batch, _) in enumerate(val_dataloader):
-        x = transform_input(batch).to(device=DEVICE)
-        y = transform_output(batch).to(device=DEVICE)
-        yh = model.forward(x)
-
-        for j in range(BATCH_SIZE):
-            xt = x[j, :].reshape((28, 28)).cpu().detach().numpy()
-            yt = y[j, :].reshape((28, 28)).cpu().detach().numpy()
-            yht = yh[j, :].reshape((28, 28)).cpu().detach().numpy()
-
-            fig, axs = plt.subplots(1, 3)
-
-            axs[0].imshow(xt)
-            axs[0].title.set_text("Occluded original")
-            axs[1].imshow(yt)
-            axs[1].title.set_text("Real original")
-            axs[2].imshow(yht)
-            axs[2].title.set_text("Our guess")
-
-            fig.savefig(f"Mnist/examples/mnist_example_{i}_{j}.png")
-            plt.close(fig)
+    # model = CausalModel().to(device=DEVICE)
+    # optimizer = Adam(lr=LR, params=model.parameters())
+    # loss_fn = NLLLoss()
+    #
+    # pbar = tqdm(train_dataloader)
+    #
+    # for (batch, _) in pbar:
+    #     x = batch
+    #
+    #     yh = model.forward(x)
+    #     loss = loss_fn(y, yh)
+    #     optimizer.zero_grad()
+    #     loss.backward()
+    #     optimizer.step()
+    #
+    #     pbar.set_description(desc=f"Training: MSE={loss}")
