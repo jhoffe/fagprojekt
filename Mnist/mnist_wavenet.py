@@ -6,15 +6,14 @@ import torch
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import NLLLoss
+from torch.nn import NLLLoss, BCELoss, CrossEntropyLoss
 from torch.optim import Adam
 from tqdm import tqdm
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import warnings
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.autograd import Variable
+from torch.distributions import Normal
 
 warnings.simplefilter("ignore")
 
@@ -24,8 +23,123 @@ def show_img(img):
     plt.imshow(img.detach().cpu().numpy().reshape((28, 28)))
     plt.show()
 
+def to_one_hot(tensor, n, fill_with=1.):
+    # we perform one hot encore with respect to the last axis
+    one_hot = torch.FloatTensor(tensor.size() + (n,)).zero_()
+    if tensor.is_cuda:
+        one_hot = one_hot.cuda()
+    one_hot.scatter_(len(tensor.size()), tensor.unsqueeze(-1), fill_with)
+    return one_hot
 
-class CausalConv1d(nn.Conv1d):
+def sample_from_mix_gaussian(y, log_scale_min=-7.0):
+    """
+    Sample from (discretized) mixture of gaussian distributions
+    Args:
+        y (Tensor): B x C x T
+        log_scale_min (float): Log scale minimum value
+    Returns:
+        Tensor: sample in range of [-1, 1].
+    """
+    C = y.size(1)
+    if C == 2:
+        nr_mix = 1
+    else:
+        assert y.size(1) % 3 == 0
+        nr_mix = y.size(1) // 3
+
+    # B x T x C
+    y = y.transpose(1, 2)
+
+    if C == 2:
+        logit_probs = None
+    else:
+        logit_probs = y[:, :, :nr_mix]
+
+    if nr_mix > 1:
+        # sample mixture indicator from softmax
+        temp = logit_probs.data.new(logit_probs.size()).uniform_(1e-5, 1.0 - 1e-5)
+        temp = logit_probs.data - torch.log(- torch.log(temp))
+        _, argmax = temp.max(dim=-1)
+
+        # (B, T) -> (B, T, nr_mix)
+        one_hot = to_one_hot(argmax, nr_mix)
+
+        # Select means and log scales
+        means = torch.sum(y[:, :, nr_mix:2 * nr_mix] * one_hot, dim=-1)
+        log_scales = torch.sum(y[:, :, 2 * nr_mix:3 * nr_mix] * one_hot, dim=-1)
+    else:
+        if C == 2:
+            means, log_scales = y[:, :, 0], y[:, :, 1]
+        elif C == 3:
+            means, log_scales = y[:, :, 1], y[:, :, 2]
+        else:
+            assert False, "shouldn't happen"
+
+    scales = torch.exp(log_scales)
+    dist = Normal(loc=means, scale=scales)
+    x = dist.sample()
+
+    x = torch.clamp(x, min=-1.0, max=1.0)
+    return x
+
+class Conv1d(nn.Conv1d):
+    """Extended nn.Conv1d for incremental dilated convolutions
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clear_buffer()
+        self._linearized_weight = None
+        self.register_backward_hook(self._clear_linearized_weight)
+
+    def incremental_forward(self, input):
+        # input: (B, T, C)
+        if self.training:
+            raise RuntimeError('incremental_forward only supports eval mode')
+
+        # reshape weight
+        weight = self._get_linearized_weight()
+        kw = self.kernel_size[0]
+        dilation = self.dilation[0]
+
+        bsz = input.size(0)  # input: bsz x len x dim
+        if kw > 1:
+            input = input.data
+            if self.input_buffer is None:
+                self.input_buffer = input.new(bsz, kw + (kw - 1) * (dilation - 1), input.size(2))
+                self.input_buffer.zero_()
+            else:
+                # shift buffer
+                self.input_buffer[:, :-1, :] = self.input_buffer[:, 1:, :].clone()
+            # append next input
+            self.input_buffer[:, -1, :] = input[:, -1, :]
+            input = self.input_buffer
+            if dilation > 1:
+                input = input[:, 0::dilation, :].contiguous()
+        output = F.linear(input.view(bsz, -1), weight, self.bias)
+        return output.view(bsz, 1, -1)
+
+    def clear_buffer(self):
+        self.input_buffer = None
+
+    def _get_linearized_weight(self):
+        if self._linearized_weight is None:
+            kw = self.kernel_size[0]
+            # nn.Conv1d
+            if self.weight.size() == (self.out_channels, self.in_channels, kw):
+                weight = self.weight.transpose(1, 2).contiguous()
+            else:
+                # fairseq.modules.conv_tbc.ConvTBC
+                weight = self.weight.transpose(2, 1).transpose(1, 0).contiguous()
+            assert weight.size() == (self.out_channels, kw, self.in_channels)
+            self._linearized_weight = weight.view(self.out_channels, -1)
+        return self._linearized_weight
+
+    def _clear_linearized_weight(self, *args):
+        self._linearized_weight = None
+
+
+class CausalConv1d(Conv1d):
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -53,7 +167,7 @@ class CausalConv1d(nn.Conv1d):
 
 
 def receptive_field_size(total_layers, num_cycles, kernel_size,
-                         dilation=lambda x: 2 ** x):
+                         dilation=lambda x: 1):
     """Compute receptive field size
     Args:
         total_layers (int): total layers
@@ -80,12 +194,12 @@ class CausalModel(nn.Module):
 
         ch = 256
 
-        self.stacks = 4
-        self.layers = 8
+        self.stacks = 2
+        self.layers = 4
         assert self.layers % self.stacks == 0
         layers_per_stack = self.layers // self.stacks
 
-        self.start_conv = nn.Conv1d(in_channels=1, out_channels=ch, kernel_size=1)
+        self.start_conv = Conv1d(in_channels=1, out_channels=ch, kernel_size=1)
         self.conv_layers = nn.ModuleList()
 
         for layer in range(self.layers):
@@ -97,9 +211,10 @@ class CausalModel(nn.Module):
 
         self.last_conv_layers = nn.ModuleList([
             nn.ReLU(inplace=True),
-            nn.Conv1d(in_channels=ch, out_channels=ch, kernel_size=1),
-            nn.Sigmoid(),
-            nn.Conv1d(in_channels=ch, out_channels=2, kernel_size=1)
+            Conv1d(in_channels=ch, out_channels=ch, kernel_size=1),
+            nn.ReLU(),
+            Conv1d(in_channels=ch, out_channels=2, kernel_size=1),
+            nn.Sigmoid()
         ])
 
         self.receptive_field = receptive_field_size(self.layers, self.stacks, self.kernel_size)
@@ -114,9 +229,33 @@ class CausalModel(nn.Module):
 
         return x
 
-    def incremental_forward(self):
+    def incremental_forward(self, T=784):
+        self.clear_buffer()
         self.eval()
 
+        B = 1
+
+        init_input = torch.zeros(B, 1, self.receptive_field).cuda()
+        generated = init_input
+
+        for t in range(T):
+            #print(generated[:, :, t:t + self.receptive_field - 1], generated[:, :, t:t + self.receptive_field - 1].size())
+            probdist = F.softmax(self.forward(generated[:, :, t:t + self.receptive_field - 1]), dim=1)[:, :, -1].squeeze().detach().cpu().numpy()
+            output = torch.tensor([[[np.random.choice([0, 1], p=probdist)]]], device='cuda')
+            generated = torch.cat((generated, output), 2)
+
+        self.clear_buffer()
+        return generated[:, :, self.receptive_field:]
+
+    def clear_buffer(self):
+        self.start_conv.clear_buffer()
+        for f in self.conv_layers:
+            f.clear_buffer()
+        for f in self.last_conv_layers:
+            try:
+                f.clear_buffer()
+            except AttributeError:
+                pass
 
 SEED = 42
 TRAIN_UPDATES = 30000
@@ -142,8 +281,9 @@ val_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=False, trans
 train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_size=BATCH_SIZE)
 val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
-model = CausalModel(kernel_size=2).cuda()
-loss_fn = NLLLoss()
+model = CausalModel(kernel_size=3).cuda()
+#model.load_state_dict(torch.load("Mnist/model.pt"))
+loss_fn = CrossEntropyLoss()
 optimizer = Adam(params=model.parameters(), lr=LR)
 
 for epoch in range(50):
@@ -157,14 +297,14 @@ for epoch in range(50):
         yh = model.forward(x.cuda())
         log_probs = F.log_softmax(yh)
 
-        loss = loss_fn(log_probs, y)
+        loss = loss_fn(yh, y)
         optimizer.zero_grad()
         loss.backward()
 
         optimizer.step()
         pbar.set_description(desc=f"NLL={loss}")
         mean_loss += loss
-    mean_loss = mean_loss/len(pbar)
+    mean_loss = mean_loss / len(pbar)
     print(mean_loss)
 
 torch.save(model.state_dict(), "Mnist/model.pt")
