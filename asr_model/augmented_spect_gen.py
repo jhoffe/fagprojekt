@@ -35,9 +35,9 @@ class AugmentedSpectrogramGenerator:
     def augment(self, sample):
         augmenter = Compose([
             AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.004, p=1),
-            TimeStretch(min_rate=0.75, max_rate=1.2, p=0.95),
-            PitchShift(min_semitones=-5, max_semitones=6, p=0.995)
-        ], p=0.997)
+            TimeStretch(min_rate=0.7, max_rate=1.3, p=0.95),
+            PitchShift(min_semitones=-8, max_semitones=8, p=0.995)
+        ], p=0.996)
 
         return augmenter(samples=sample, sample_rate=self.sample_rate)
 
@@ -72,6 +72,10 @@ class AugmentedSpectrogramGenerator:
             spectrogram = ((spectrogram.T - mean) / (std + np.finfo(np.float64).eps)).T
 
         spect = spectrogram.astype(np.float32)
+
+        if self.should_augment:
+            spec_freq_mask = SpecCompose([SpecFrequencyMask(min_mask_fraction=0.05, max_mask_fraction=0.15, p=0.98)])
+            spect = spec_freq_mask(spect)
 
         save_path, _ext = os.path.splitext(path)
 
