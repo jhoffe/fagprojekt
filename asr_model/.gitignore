@@ -3,3 +3,4 @@
 models/*.pt
 !models/model.pt
 results/*.csv
+data/
