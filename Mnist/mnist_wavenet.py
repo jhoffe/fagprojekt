@@ -10,7 +10,7 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.distributions import Normal
 from torch.utils.data import DataLoader
-from torch.nn import BCELoss
+from torch.nn import BCELoss, CrossEntropyLoss
 from torch.optim import Adam
 from tqdm import tqdm
 
@@ -200,8 +200,9 @@ class CausalModel(nn.Module):
         self.layers = 4
         assert self.layers % self.stacks == 0
         layers_per_stack = self.layers // self.stacks
+        classes = 256
 
-        self.start_conv = Conv1d(in_channels=1, out_channels=ch, kernel_size=1)
+        self.start_conv = Conv1d(in_channels=classes, out_channels=ch, kernel_size=1)
         self.conv_layers = nn.ModuleList()
 
         for layer in range(self.layers):
@@ -215,7 +216,7 @@ class CausalModel(nn.Module):
             nn.ReLU(inplace=True),
             Conv1d(in_channels=ch, out_channels=ch, kernel_size=1),
             nn.ReLU(),
-            Conv1d(in_channels=ch, out_channels=2, kernel_size=1),
+            Conv1d(in_channels=ch, out_channels=classes, kernel_size=1),
             nn.Sigmoid()
         ])
 
@@ -264,19 +265,15 @@ class CausalModel(nn.Module):
 SEED = 42
 TRAIN_UPDATES = 30000
 BATCH_SIZE = 32
-LR = 3e-3
+LR = 3e-2
 DEVICE = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
 CPU_CORES = int(os.environ["CPU_CORES"]) if os.getenv("CPU_CORES") is not None else 4
 
 default_transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(0, 1),
-    transforms.Lambda(lambda x: x.flatten(start_dim=1))
-])
-target_transform = transforms.Compose([
-    transforms.Lambda(lambda x: x > 0.5),
-    transforms.Lambda(lambda x: x.type(torch.LongTensor).squeeze()),
-    transforms.Lambda(lambda x: F.one_hot(x, num_classes=2).permute([0, 2, 1]).float())
+    transforms.Lambda(lambda x: x.flatten(start_dim=1)),
+    transforms.Lambda(lambda x: torch.bucketize(x, torch.tensor([i * (1/256) for i in range(1, 256)]))),
+    transforms.Lambda(lambda x: F.one_hot(x, num_classes=256).permute([0, 2, 1]).float())
 ])
 
 train_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform,
@@ -288,18 +285,18 @@ val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
 model = CausalModel(kernel_size=3).cuda()
 #model.load_state_dict(torch.load("Mnist/model.pt"))
-loss_fn = BCELoss()
+loss_fn = CrossEntropyLoss(weight=torch.tensor([0.6]*64 + [0.3] * 64 + [0.1] * 128).cuda())
 optimizer = Adam(params=model.parameters(), lr=LR)
 
-for epoch in range(20):
+for epoch in range(1):
     print(f"Epoch: {epoch + 1}")
     pbar = tqdm(train_dataloader)
 
     mean_loss = 0
 
     for x, _ in pbar:
-        y = target_transform(x).cuda()
-        yh = model.forward(x.cuda())
+        y = x.cuda().squeeze()
+        yh = model.forward(y)
         log_probs = F.softmax(yh)
 
         loss = loss_fn(yh, y)
