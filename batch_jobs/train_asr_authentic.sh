@@ -29,7 +29,7 @@ source fagprojekt-env/bin/activate
 export TRAIN_DATASET="asr_model/data/librispeech/authentic-train.txt"
 export TEST_DATASET="asr_model/data/librispeech/authentic-test-clean.txt"
 export MODELS_PATH="asr_model/models"
-export TRAIN_UPDATES=200000
+export TRAIN_UPDATES=150000
 export BATCH_SIZE=64
 export RESULTS_PATH="asr_model/results"
 export NAME="authentic"

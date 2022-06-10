@@ -1,19 +1,15 @@
 import os
+import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
-
 import torch
-import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import NLLLoss, BCELoss, CrossEntropyLoss
-from torch.optim import Adam
-from tqdm import tqdm
+import torchvision
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-import warnings
 from torch.distributions import Normal
+from torch.utils.data import DataLoader
 
 warnings.simplefilter("ignore")
 
@@ -23,6 +19,7 @@ def show_img(img):
     plt.imshow(img.detach().cpu().numpy().reshape((28, 28)))
     plt.show()
 
+
 def to_one_hot(tensor, n, fill_with=1.):
     # we perform one hot encore with respect to the last axis
     one_hot = torch.FloatTensor(tensor.size() + (n,)).zero_()
@@ -30,6 +27,7 @@ def to_one_hot(tensor, n, fill_with=1.):
         one_hot = one_hot.cuda()
     one_hot.scatter_(len(tensor.size()), tensor.unsqueeze(-1), fill_with)
     return one_hot
+
 
 def sample_from_mix_gaussian(y, log_scale_min=-7.0):
     """
@@ -81,6 +79,7 @@ def sample_from_mix_gaussian(y, log_scale_min=-7.0):
 
     x = torch.clamp(x, min=-1.0, max=1.0)
     return x
+
 
 class Conv1d(nn.Conv1d):
     """Extended nn.Conv1d for incremental dilated convolutions
@@ -239,8 +238,9 @@ class CausalModel(nn.Module):
         generated = init_input
 
         for t in range(T):
-            #print(generated[:, :, t:t + self.receptive_field - 1], generated[:, :, t:t + self.receptive_field - 1].size())
-            probdist = F.softmax(self.forward(generated[:, :, t:t + self.receptive_field - 1]), dim=1)[:, :, -1].squeeze().detach().cpu().numpy()
+            # print(generated[:, :, t:t + self.receptive_field - 1], generated[:, :, t:t + self.receptive_field - 1].size())
+            probdist = F.softmax(self.forward(generated[:, :, t:t + self.receptive_field - 1]), dim=1)[:, :,
+                       -1].squeeze().detach().cpu().numpy()
             output = torch.tensor([[[np.random.choice([0, 1], p=probdist)]]], device='cuda')
             generated = torch.cat((generated, output), 2)
 
@@ -256,6 +256,7 @@ class CausalModel(nn.Module):
                 f.clear_buffer()
             except AttributeError:
                 pass
+
 
 SEED = 42
 TRAIN_UPDATES = 30000
@@ -282,29 +283,29 @@ train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_size=B
 val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
 model = CausalModel(kernel_size=3).cuda()
-#model.load_state_dict(torch.load("Mnist/model.pt"))
-loss_fn = CrossEntropyLoss()
-optimizer = Adam(params=model.parameters(), lr=LR)
-
-for epoch in range(50):
-    print(f"Epoch: {epoch + 1}")
-    pbar = tqdm(train_dataloader)
-
-    mean_loss = 0
-
-    for x, _ in pbar:
-        y = target_transform(x).cuda()
-        yh = model.forward(x.cuda())
-        log_probs = F.log_softmax(yh)
-
-        loss = loss_fn(yh, y)
-        optimizer.zero_grad()
-        loss.backward()
-
-        optimizer.step()
-        pbar.set_description(desc=f"NLL={loss}")
-        mean_loss += loss
-    mean_loss = mean_loss / len(pbar)
-    print(mean_loss)
-
-torch.save(model.state_dict(), "Mnist/model.pt")
+model.load_state_dict(torch.load("Mnist/model.pt"))
+# loss_fn = CrossEntropyLoss()
+# optimizer = Adam(params=model.parameters(), lr=LR)
+#
+# for epoch in range(50):
+#     print(f"Epoch: {epoch + 1}")
+#     pbar = tqdm(train_dataloader)
+#
+#     mean_loss = 0
+#
+#     for x, _ in pbar:
+#         y = target_transform(x).cuda()
+#         yh = model.forward(x.cuda())
+#         log_probs = F.log_softmax(yh)
+#
+#         loss = loss_fn(yh, y)
+#         optimizer.zero_grad()
+#         loss.backward()
+#
+#         optimizer.step()
+#         pbar.set_description(desc=f"NLL={loss}")
+#         mean_loss += loss
+#     mean_loss = mean_loss / len(pbar)
+#     print(mean_loss)
+#
+# torch.save(model.state_dict(), "Mnist/model.pt")
