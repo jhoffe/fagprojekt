@@ -17,7 +17,6 @@ combined = {'authentic-train': ['train-clean-100', 'train-clean-360', 'train-oth
 
 combined_datasets = defaultdict(lambda: "")
 
-LIMIT = 18
 SAMPLE_RATE = 22050
 
 for dataset in datasets:
