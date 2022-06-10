@@ -26,3 +26,9 @@ export CPU_CORES=32
 export SHOULD_AUGMENT=1
 
 python3 asr_model/augmented_spect_gen.py
+
+bsub < batch_jobs/train_asr_synthetic.sh
+bsub < batch_jobs/train_asr_authentic.sh
+bsub < batch_jobs/train_asr_mixed.sh
+
+
