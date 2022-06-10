@@ -10,6 +10,9 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.distributions import Normal
 from torch.utils.data import DataLoader
+from torch.nn import BCELoss
+from torch.optim import Adam
+from tqdm import tqdm
 
 warnings.simplefilter("ignore")
 
@@ -272,7 +275,8 @@ default_transform = transforms.Compose([
 ])
 target_transform = transforms.Compose([
     transforms.Lambda(lambda x: x > 0.5),
-    transforms.Lambda(lambda x: x.type(torch.LongTensor).squeeze())
+    transforms.Lambda(lambda x: x.type(torch.LongTensor).squeeze()),
+    transforms.Lambda(lambda x: F.one_hot(x, num_classes=2).permute([0, 2, 1]).float())
 ])
 
 train_dataset = torchvision.datasets.MNIST(root="./data/mnist", train=True, transform=default_transform,
@@ -283,29 +287,29 @@ train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_size=B
 val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
 model = CausalModel(kernel_size=3).cuda()
-model.load_state_dict(torch.load("Mnist/model.pt"))
-# loss_fn = CrossEntropyLoss()
-# optimizer = Adam(params=model.parameters(), lr=LR)
-#
-# for epoch in range(50):
-#     print(f"Epoch: {epoch + 1}")
-#     pbar = tqdm(train_dataloader)
-#
-#     mean_loss = 0
-#
-#     for x, _ in pbar:
-#         y = target_transform(x).cuda()
-#         yh = model.forward(x.cuda())
-#         log_probs = F.log_softmax(yh)
-#
-#         loss = loss_fn(yh, y)
-#         optimizer.zero_grad()
-#         loss.backward()
-#
-#         optimizer.step()
-#         pbar.set_description(desc=f"NLL={loss}")
-#         mean_loss += loss
-#     mean_loss = mean_loss / len(pbar)
-#     print(mean_loss)
-#
-# torch.save(model.state_dict(), "Mnist/model.pt")
+#model.load_state_dict(torch.load("Mnist/model.pt"))
+loss_fn = BCELoss()
+optimizer = Adam(params=model.parameters(), lr=LR)
+
+for epoch in range(20):
+    print(f"Epoch: {epoch + 1}")
+    pbar = tqdm(train_dataloader)
+
+    mean_loss = 0
+
+    for x, _ in pbar:
+        y = target_transform(x).cuda()
+        yh = model.forward(x.cuda())
+        log_probs = F.softmax(yh)
+
+        loss = loss_fn(yh, y)
+        optimizer.zero_grad()
+        loss.backward()
+
+        optimizer.step()
+        pbar.set_description(desc=f"NLL={loss}")
+        mean_loss += loss
+    mean_loss = mean_loss / len(pbar)
+    print(mean_loss)
+
+torch.save(model.state_dict(), "Mnist/model.pt")
