@@ -288,7 +288,7 @@ model = CausalModel(kernel_size=3).cuda()
 loss_fn = CrossEntropyLoss(weight=torch.tensor([0.6]*64 + [0.3] * 64 + [0.1] * 128).cuda())
 optimizer = Adam(params=model.parameters(), lr=LR)
 
-for epoch in range(1):
+for epoch in range(10):
     print(f"Epoch: {epoch + 1}")
     pbar = tqdm(train_dataloader)
 
