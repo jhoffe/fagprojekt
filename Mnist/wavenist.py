@@ -46,7 +46,7 @@ class WaveNIST(pl.LightningModule):
         self.activation = nn.ReLU()
         self.loss_fn = nn.NLLLoss()
 
-    def forward(self, x):
+    def forward(self, x, log=False):
         x = self.first_conv(x)
 
         for h in self.hidden_convs:
@@ -54,24 +54,24 @@ class WaveNIST(pl.LightningModule):
 
         x = self.end_conv(x)
 
-        return torch.log_softmax(x, 1)
+        return torch.log_softmax(x, 1) if log else torch.softmax(x, 1)
 
     def generate(self, batch_size, output_length):
-        generated = torch.zeros((batch_size, output_length))
+        generated = torch.zeros((batch_size, 1, output_length))
 
         for t in range(output_length):
             p = self.forward(generated)
             y = torch.multinomial(p[:, t, :], num_samples=1)
-            generated[:, t] = y[:, 0]
+            generated[:, 0, t] = y[:, 0]
 
         return generated
 
-    def plot_generated(self, generated):
+    @staticmethod
+    def plot_generated(generated):
         for i in range(generated.size(0).numpy()):
             fig = plt.figure()
             plt.imshow(generated[i, :].detach().cpu().numpy().reshape((28, 28)))
             yield fig
-
 
     def discretize_input(self, x):
         return torch.bucketize(x, torch.tensor(
@@ -80,7 +80,7 @@ class WaveNIST(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, _ = batch
         y = self.discretize_input(x)
-        p = self.forward(x)
+        p = self.forward(x, log=True)
         loss = self.loss_fn(p, y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
@@ -88,7 +88,7 @@ class WaveNIST(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, _ = batch
         y = self.discretize_input(x)
-        p = self.forward(x)
+        p = self.forward(x, log=True)
         val_loss = self.loss_fn(p, y)
         self.log("val_loss", val_loss)
 
