@@ -16,6 +16,10 @@ import pandas as pd
 val_source = os.environ["TEST_DATASET"]
 load_path = os.environ["MODEL_PATH"]
 
+'''
+Skal slettes.
+'''
+
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()
 preprocessor = [spec_preprocessor, text_preprocessor]

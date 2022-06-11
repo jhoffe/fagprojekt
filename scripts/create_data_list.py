@@ -4,11 +4,10 @@ from tqdm import tqdm
 from multiprocessing import Pool
 
 """
-The aim of this file is to create lists of the files to be used in the ASR model.
+The aim of this file is to create lists of the synthetic files to be used in the ASR model.
 This is necessary for the ASR model to work, and in the process, we filter out some 
 of the longer audio clips. This is done solely for the reason that our generated
-clips become distorted at this point. As such, we only keep the authentic clips that
-have corresponding synthetic, unfiltered counterparts.
+clips become distorted at this point.
 """
 
 datasets = os.listdir('data/synthetic_speech/')

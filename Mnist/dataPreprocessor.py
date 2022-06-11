@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 
+'''
+Skal slettes.
+'''
+
 ### Trainingset[index][picture(0) or label(1)][1, 28, 28]
 cwd = os.getcwd()
 MnistDataset_training = torchvision.datasets.MNIST(root="{}\Data".format(os.getcwd()), download=True, train=True, transform=ToTensor())

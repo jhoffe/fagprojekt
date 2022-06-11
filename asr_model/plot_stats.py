@@ -2,6 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+'''
+Skal måske slettes?
+'''
+
 N = 2000
 
 sets = {

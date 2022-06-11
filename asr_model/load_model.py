@@ -15,6 +15,13 @@ VAL_SOURCE = os.environ["TEST_DATASET"]
 MODEL_PATH = os.environ["MODEL_PATH"]
 NAME = os.environ["NAME"]
 
+'''
+This script is used for validating trained models. I.e. a trained model should exist
+before this script is used.
+'''
+
+# Initialize preprocessors and load data set
+
 spec_preprocessor = SpectrogramPreprocessor(output_format='NFT', sample_rate=22050, ext=".flac")
 text_preprocessor = TextPreprocessor()
 preprocessor = [spec_preprocessor, text_preprocessor]
@@ -23,6 +30,8 @@ val_dataset = BaseDataset(source=VAL_SOURCE, preprocessor=preprocessor, sort_by=
 
 val_loader = DataLoader(val_dataset, num_workers=4, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=32)
+
+# Initialize model, loss function and tracking metrics
 
 asr_model = ASRModel(dropout=0.05).cuda()  # For CPU: remove .cuda()
 model_parameters = torch.load(MODEL_PATH)
@@ -35,6 +44,8 @@ ctc_metric = LossTracker()
 
 val_logger = Logger('Validation', ctc_metric, wer_metric, cer_metric)
 
+# Run validation
+
 runner = Runner(
     model=asr_model,
     name=NAME,
@@ -42,6 +53,8 @@ runner = Runner(
 )
 
 analysis = runner.validate(analysis=True)
+
+# Save results and make plots of relevant data
 
 analysis.preprocess()
 
