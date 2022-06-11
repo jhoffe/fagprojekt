@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
@@ -98,9 +98,11 @@ val_loader = DataLoader(val_set, batch_size=32, num_workers=cpu_count())
 
 pl.seed_everything(42, workers=True)
 
+logger = WandbLogger(project="wavenist")
+
 model = WaveNIST()
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=1000,
-                     logger=CSVLogger(save_dir="logs"),
+                     logger=logger,
                      default_root_dir="models/")
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)

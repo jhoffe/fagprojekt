@@ -26,4 +26,6 @@ module load cuda/11.3
 # NOTE: needs to have been built with the same SciPy version above!
 source fagprojekt-env/bin/activate
 
-python3 Mnist/mnist_wavenet.py
+export WANDB_API_KEY="5403fe6e39e261a91fd0a604a0ea7e22c75927cf"
+
+python3 Mnist/wavenist.py
