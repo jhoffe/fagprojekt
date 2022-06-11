@@ -68,14 +68,14 @@ class WaveNIST(pl.LightningModule):
 
     def discretize_input(self, x):
         return torch.bucketize(x, torch.tensor(
-            [1 / self.output_classes * i for i in range(self.output_classes - 1)], device=x.get_device())).squeeze()
+            [1 / self.output_classes * i for i in range(self.output_classes - 1)], device=self.device)).squeeze()
 
     def training_step(self, batch, batch_idx):
         x, _ = batch
         y = self.discretize_input(x)
         p = self.forward(x)
         loss = self.loss_fn(p, y)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -90,20 +90,19 @@ class WaveNIST(pl.LightningModule):
         return optimizer
 
 
-classes = 256
 input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: x.flatten(1))])
 
 train_set = datasets.MNIST(root="MNIST", download=True, train=True, transform=input_transforms)
 val_set = datasets.MNIST(root="MNIST", download=True, train=False, transform=input_transforms)
 
-train_loader = DataLoader(train_set, batch_size=32, num_workers=min(16, cpu_count()))
+train_loader = DataLoader(train_set, batch_size=32, num_workers=min(16, cpu_count()), shuffle=True)
 val_loader = DataLoader(val_set, batch_size=32, num_workers=min(16, cpu_count()))
 
 pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST()
+model = WaveNIST(output_classes=16, kernel_size=13, layers=3)
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=1000,
                      logger=logger,
