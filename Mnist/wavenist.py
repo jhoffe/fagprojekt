@@ -74,6 +74,7 @@ class WaveNIST(pl.LightningModule):
         y = self.discretize_input(x)
         p = self.forward(x)
         loss = self.loss_fn(p, y)
+        self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
