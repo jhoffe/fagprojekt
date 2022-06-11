@@ -6,6 +6,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataPreprocessor import  *
 
+'''
+Skal slettes.
+'''
+
 MnistInstance = MnistDataset()
 trainingSet = MnistInstance.TrainingSet
 testset = MnistInstance.TestingSet
