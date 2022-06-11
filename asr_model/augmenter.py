@@ -23,13 +23,17 @@ CPU_CORES = int(os.environ["CPU_CORES"])
 OUTPUT_PATH = os.environ['OUTPUT_PATH']
 #API_KEY = os.environ['WANDB_API_KEY']
 
+'''
+SKAL MÅSKE SLETTES
+'''
+
 dataset = BaseDataset(source=DATASET_PATH, sort_by=0, preprocessor=[])
 dataloader = torch.utils.data.DataLoader(dataset, num_workers=CPU_CORES // 2, pin_memory=True,
                                          batch_size=32, prefetch_factor=2)
 
 noise_params = {
     "min_amplitude": 0.001,
-    "max_amplitude": 0.01,
+    "max_amplitude": 0.004,
     "p": 1
 }
 

@@ -12,6 +12,10 @@ from tqdm import tqdm
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
+'''
+Skal nok slettes.
+'''
+
 
 class CausalConv1d(nn.Conv1d):
     def __init__(self,

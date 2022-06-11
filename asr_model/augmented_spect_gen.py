@@ -10,6 +10,10 @@ import random
 from asr.data import BaseDataset
 from tqdm import tqdm
 
+'''
+This script has the purpose of generating augmented spectrograms from .flac files.
+This should be run in advance if one wishes to train using spectrograms.
+'''
 
 class AugmentedSpectrogramGenerator:
     def __init__(self, ext='.flac', sample_rate=22050, window_size=0.02, stride=0.01, power_spectrum=True, num_mels=80,
@@ -32,6 +36,7 @@ class AugmentedSpectrogramGenerator:
         self.mel_basis = None if num_mels is None else \
             librosa.filters.mel(sr=sample_rate, n_fft=int(window_size * sample_rate), n_mels=num_mels)
 
+    # The augment(sample) function takes in a sample and applies Gaussian noice, Time Stretch and Pitch Shift
     def augment(self, sample):
         augmenter = Compose([
             AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.004, p=1),
@@ -41,6 +46,9 @@ class AugmentedSpectrogramGenerator:
 
         return augmenter(samples=sample, sample_rate=self.sample_rate)
 
+    # The generate(path) function takes in the path of a .flac files and calculates the mel spectrogram
+    # for the given .flac file. If should_augment is True, then augmentation takes place. This should only
+    # be the case for synthetic files.
     def generate(self, path):
         path = path[-1]
         if not path.endswith(self.ext):
@@ -83,7 +91,7 @@ class AugmentedSpectrogramGenerator:
 
         return f"{save_path}.spect"
 
-
+# The following deployts the above class to generate spectrograms for the given path of the data set.
 if __name__ == "__main__":
     SEED = 42
     torch.manual_seed(SEED)

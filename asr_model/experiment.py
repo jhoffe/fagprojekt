@@ -20,6 +20,11 @@ TRAIN_DATASET = os.environ['TRAIN_DATASET']
 VAL_DATASET = os.environ['TEST_DATASET']
 PATH = "model_authentic.pt"
 
+'''
+SKAL SLETTES
+'''
+
+
 train_source = TRAIN_DATASET
 val_source = VAL_DATASET
 

@@ -16,6 +16,10 @@ from tqdm import tqdm
 
 warnings.simplefilter("ignore")
 
+'''
+Skal måske slettes.
+'''
+
 
 def show_img(img):
     plt.figure()

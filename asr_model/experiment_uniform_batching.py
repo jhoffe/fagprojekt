@@ -30,6 +30,12 @@ torch.manual_seed(SEED)
 random.seed(SEED)
 numpy.random.seed(SEED)
 
+'''
+First, the data is loaded. Depending on whether training is done directly on spectrograms
+or on .flac files depends on the "LOAD_SPECTROGRAMS" variable. Both are an option but spectrograms 
+take slightly less time.
+'''
+
 text_preprocessor = TextPreprocessor()
 
 if LOAD_SPECTROGRAMS == 1:
@@ -55,9 +61,13 @@ train_loader = DataLoader(train_dataset, num_workers=CPU_CORES, pin_memory=True,
 val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=BATCH_SIZE, prefetch_factor=2)
 
+# The model is initiated with CUDA and with a learning rate for the optimizer.
+
 asr_model = ASRModel().cuda()  # For CPU: remove .cuda()
 
 LR = 3e-4
+
+# The Runner Class is used for training and validating the model.
 
 runner = Runner(
     model=asr_model,
@@ -69,6 +79,8 @@ runner = Runner(
     validate_every=2000,
     lr=LR
 )
+
+# Weights & Biases is used to track progress during training.
 
 run = wandb.init(project="asr", entity="fagprojekt-synthetic-asr", reinit=True, config={
             "lr": LR,

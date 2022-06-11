@@ -13,6 +13,9 @@ import torch.nn.functional as F
 import os
 from asr.data.val_analysis import ValidationAnalysis
 
+'''
+This is the Runner script containing the utmost important wheel in the machine of this project. 
+'''
 
 class Runner:
     def __init__(self, model, name, train_loader=None, val_loader=None, stat_path="asr_model/results/",

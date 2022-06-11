@@ -2,6 +2,13 @@ import os
 
 DATALISTS_PATH = "asr_model/data/librispeech"
 
+'''
+This script is used for combining data lists. Data lists are essential for the ASR-model
+to run, and this script merely takes existing lists and combines them.
+In total, 3 lists are made: one for synthetic training, one for authentic training
+and one for mixed training.
+'''
+
 combined = {
     'synthetic-train': [
         'synthetic_train-clean-100',
