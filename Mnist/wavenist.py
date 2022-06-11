@@ -1,11 +1,11 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from psutil import cpu_count
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from psutil import cpu_count
 
 
 class CausalConv1d(nn.Module):
@@ -66,7 +66,8 @@ class WaveNIST(pl.LightningModule):
         return generated
 
     def discretize_input(self, x):
-        return torch.bucketize(x, torch.Tensor([1 / self.output_classes * i for i in range(self.output_classes - 1)])).squeeze()
+        return torch.bucketize(x, torch.tensor(
+            [1 / self.output_classes * i for i in range(self.output_classes - 1)], device=x.get_device())).squeeze()
 
     def training_step(self, batch, batch_idx):
         x, _ = batch
