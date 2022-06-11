@@ -7,6 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+import matplotlib.pyplot as plt
 
 
 class CausalConv1d(nn.Module):
@@ -43,7 +44,6 @@ class WaveNIST(pl.LightningModule):
                                      kernel_size=kernel_size, A=False, bias=True)
 
         self.activation = nn.ReLU()
-        self.final_activation = nn.Sigmoid()
         self.loss_fn = nn.NLLLoss()
 
     def forward(self, x):
@@ -66,6 +66,13 @@ class WaveNIST(pl.LightningModule):
 
         return generated
 
+    def plot_generated(self, generated):
+        for i in range(generated.size(0).numpy()):
+            fig = plt.figure()
+            plt.imshow(generated[i, :].detach().cpu().numpy().reshape((28, 28)))
+            yield fig
+
+
     def discretize_input(self, x):
         return torch.bucketize(x, torch.tensor(
             [1 / self.output_classes * i for i in range(self.output_classes - 1)], device=self.device)).squeeze()
@@ -85,6 +92,11 @@ class WaveNIST(pl.LightningModule):
         val_loss = self.loss_fn(p, y)
         self.log("val_loss", val_loss)
 
+        generated = self.generate(32, 28 * 28)
+        for fig in self.plot_generated(generated):
+            self.log("generated_example", fig)
+            plt.close(fig)
+
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
@@ -102,7 +114,8 @@ pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(output_classes=16, kernel_size=13, layers=3)
+model = WaveNIST(output_classes=16, hidden=512, kernel_size=13, layers=5)
+
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=1000,
                      logger=logger,
