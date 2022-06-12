@@ -1,13 +1,14 @@
+import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from psutil import cpu_count
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-import matplotlib.pyplot as plt
+from tqdm import trange
 
 
 class CausalConv1d(nn.Module):
@@ -57,21 +58,24 @@ class WaveNIST(pl.LightningModule):
         return torch.log_softmax(x, 1) if log else torch.softmax(x, 1)
 
     def generate(self, batch_size, output_length):
-        generated = torch.zeros((batch_size, 1, output_length))
+        generated = torch.zeros((batch_size, 1, output_length), device=self.device)
 
-        for t in range(output_length):
+        for t in trange(output_length):
             p = self.forward(generated)
-            y = torch.multinomial(p[:, t, :], num_samples=1)
+            y = torch.multinomial(p[:, :, t], num_samples=1)
             generated[:, 0, t] = y[:, 0]
 
         return generated
 
     @staticmethod
     def plot_generated(generated):
-        for i in range(generated.size(0).numpy()):
+        figs = []
+        for i in range(generated.size(0)):
             fig = plt.figure()
             plt.imshow(generated[i, :].detach().cpu().numpy().reshape((28, 28)))
-            yield fig
+            figs.append(fig)
+
+        return figs
 
     def discretize_input(self, x):
         return torch.bucketize(x, torch.tensor(
@@ -121,4 +125,5 @@ trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      logger=logger,
                      default_root_dir="models/",
                      callbacks=[EarlyStopping(monitor="val_loss", mode="min")])
+
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
