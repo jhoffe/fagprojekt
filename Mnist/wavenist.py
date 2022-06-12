@@ -8,7 +8,6 @@ from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from tqdm import trange
 
 
 class CausalConv1d(nn.Module):
@@ -57,10 +56,11 @@ class WaveNIST(pl.LightningModule):
 
         return torch.log_softmax(x, 1) if log else torch.softmax(x, 1)
 
+    @torch.no_grad()
     def generate(self, batch_size, output_length):
         generated = torch.zeros((batch_size, 1, output_length), device=self.device)
 
-        for t in trange(output_length):
+        for t in range(output_length):
             p = self.forward(generated)
             y = torch.multinomial(p[:, :, t], num_samples=1)
             generated[:, 0, t] = y[:, 0]
@@ -97,8 +97,9 @@ class WaveNIST(pl.LightningModule):
         self.log("val_loss", val_loss)
 
         generated = self.generate(32, 28 * 28)
-        for fig in self.plot_generated(generated):
-            self.log("generated_example", fig)
+        figs = self.logger.log_image(self.plot_generated(generated))
+        self.logger.log_image(figs)
+        for fig in figs:
             plt.close(fig)
 
     def configure_optimizers(self):
