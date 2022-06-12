@@ -48,6 +48,7 @@ class WaveNIST(pl.LightningModule):
     def __init__(self, layers=3, hidden=256, kernel_size=3, output_classes=256):
         super(WaveNIST, self).__init__()
         self.output_classes = output_classes
+        self.automatic_optimization = False
 
         self.first_conv = CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True,
                                        bias=True)
@@ -57,6 +58,7 @@ class WaveNIST(pl.LightningModule):
                                      kernel_size=kernel_size, A=False, bias=True)
 
         self.activation = nn.LeakyReLU()
+
 
     def loss_fn(self, x, p, reduction='sum'):
         log_p = log_categorical(x, p, num_classes=self.output_classes, reduction=reduction, dim=-1)
@@ -98,10 +100,15 @@ class WaveNIST(pl.LightningModule):
             device=self.device)).squeeze()
 
     def training_step(self, batch, batch_idx):
+        opt = self.optimizers()
+        opt.zero_grad()
+
         x, _ = batch
         y = self.discretize_input(x)
         p = self.forward(x).permute(0, 2, 1)
         loss = self.loss_fn(y, p)
+        self.manual_backward(loss)
+        opt.step()
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
@@ -126,6 +133,9 @@ class WaveNIST(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
+
+    def manual_backward(self, loss):
+        loss.backward(retain_graph=True)
 
 
 input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: x.flatten(1))])
