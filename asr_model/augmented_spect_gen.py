@@ -82,7 +82,7 @@ class AugmentedSpectrogramGenerator:
         spect = spectrogram.astype(np.float32)
 
         if self.should_augment:
-            spec_freq_mask = SpecCompose([SpecFrequencyMask(min_mask_fraction=0.05, max_mask_fraction=0.20, p=0.98)])
+            spec_freq_mask = SpecCompose([SpecFrequencyMask(min_mask_fraction=0.05, max_mask_fraction=0.20, p=0.90)])
             spect = spec_freq_mask(spect)
 
         save_path, _ext = os.path.splitext(path)
