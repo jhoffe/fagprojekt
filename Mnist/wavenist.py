@@ -29,7 +29,9 @@ class CausalConv1d(nn.Module):
         else:
             return conv_out
 
+
 EPS = 1.e-5
+
 
 def log_categorical(x, p, num_classes=256, reduction=None, dim=None):
     x = F.one_hot(x.long(), num_classes)
@@ -40,6 +42,7 @@ def log_categorical(x, p, num_classes=256, reduction=None, dim=None):
         return torch.sum(log_p, dim)
     else:
         return log_p
+
 
 class WaveNIST(pl.LightningModule):
     def __init__(self, layers=3, hidden=256, kernel_size=3, output_classes=256):
@@ -91,13 +94,13 @@ class WaveNIST(pl.LightningModule):
         return figs
 
     def discretize_input(self, x):
-        return torch.bucketize(x, torch.tensor(
-            [1 / self.output_classes * i for i in range(self.output_classes - 1)], device=self.device)).squeeze()
+        return torch.bucketize(x, torch.tensor([1 / self.output_classes * i for i in range(self.output_classes - 1)],
+            device=self.device)).squeeze()
 
     def training_step(self, batch, batch_idx):
         x, _ = batch
         y = self.discretize_input(x)
-        p = self.forward(x, log=True)
+        p = self.forward(x).permute(0, 2, 1)
         loss = self.loss_fn(p, y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
@@ -140,9 +143,7 @@ logger = WandbLogger(project="wavenist")
 model = WaveNIST(output_classes=16, hidden=256, kernel_size=27, layers=3)
 
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                     devices=-1 if torch.cuda.is_available() else None,
-                     max_epochs=50,
-                     logger=logger,
+                     devices=-1 if torch.cuda.is_available() else None, max_epochs=100, logger=logger,
                      default_root_dir="models/")
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
