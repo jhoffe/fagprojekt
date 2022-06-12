@@ -35,56 +35,42 @@ def to_one_hot(tensor, n, fill_with=1.):
     one_hot.scatter_(len(tensor.size()), tensor.unsqueeze(-1), fill_with)
     return one_hot
 
-
-def sample_from_mix_gaussian(y, log_scale_min=-7.0):
+def sample_from_discretized_mix_logistic(y, log_scale_min=-7.0,
+                                         clamp_log_scale=False):
     """
-    Sample from (discretized) mixture of gaussian distributions
+    Sample from discretized mixture of logistic distributions
     Args:
         y (Tensor): B x C x T
         log_scale_min (float): Log scale minimum value
     Returns:
         Tensor: sample in range of [-1, 1].
     """
-    C = y.size(1)
-    if C == 2:
-        nr_mix = 1
-    else:
-        assert y.size(1) % 3 == 0
-        nr_mix = y.size(1) // 3
+    assert y.size(1) % 3 == 0
+    nr_mix = y.size(1) // 3
 
     # B x T x C
     y = y.transpose(1, 2)
+    logit_probs = y[:, :, :nr_mix]
 
-    if C == 2:
-        logit_probs = None
-    else:
-        logit_probs = y[:, :, :nr_mix]
+    # sample mixture indicator from softmax
+    temp = logit_probs.data.new(logit_probs.size()).uniform_(1e-5, 1.0 - 1e-5)
+    temp = logit_probs.data - torch.log(- torch.log(temp))
+    _, argmax = temp.max(dim=-1)
 
-    if nr_mix > 1:
-        # sample mixture indicator from softmax
-        temp = logit_probs.data.new(logit_probs.size()).uniform_(1e-5, 1.0 - 1e-5)
-        temp = logit_probs.data - torch.log(- torch.log(temp))
-        _, argmax = temp.max(dim=-1)
+    # (B, T) -> (B, T, nr_mix)
+    one_hot = to_one_hot(argmax, nr_mix)
+    # select logistic parameters
+    means = torch.sum(y[:, :, nr_mix:2 * nr_mix] * one_hot, dim=-1)
+    log_scales = torch.sum(y[:, :, 2 * nr_mix:3 * nr_mix] * one_hot, dim=-1)
+    if clamp_log_scale:
+        log_scales = torch.clamp(log_scales, min=log_scale_min)
+    # sample from logistic & clip to interval
+    # we don't actually round to the nearest 8bit value when sampling
+    u = means.data.new(means.size()).uniform_(1e-5, 1.0 - 1e-5)
+    x = means + torch.exp(log_scales) * (torch.log(u) - torch.log(1. - u))
 
-        # (B, T) -> (B, T, nr_mix)
-        one_hot = to_one_hot(argmax, nr_mix)
+    x = torch.clamp(torch.clamp(x, min=-1.), max=1.)
 
-        # Select means and log scales
-        means = torch.sum(y[:, :, nr_mix:2 * nr_mix] * one_hot, dim=-1)
-        log_scales = torch.sum(y[:, :, 2 * nr_mix:3 * nr_mix] * one_hot, dim=-1)
-    else:
-        if C == 2:
-            means, log_scales = y[:, :, 0], y[:, :, 1]
-        elif C == 3:
-            means, log_scales = y[:, :, 1], y[:, :, 2]
-        else:
-            assert False, "shouldn't happen"
-
-    scales = torch.exp(log_scales)
-    dist = Normal(loc=means, scale=scales)
-    x = dist.sample()
-
-    x = torch.clamp(x, min=-1.0, max=1.0)
     return x
 
 
@@ -242,18 +228,26 @@ class CausalModel(nn.Module):
 
         B = 1
 
-        init_input = torch.zeros(B, 1, self.receptive_field).cuda()
-        generated = init_input
+        init_input = torch.zeros(B, 256, 256).cuda()
+        outputs = []
+
+        current_input = init_input
 
         for t in range(T):
-            # print(generated[:, :, t:t + self.receptive_field - 1], generated[:, :, t:t + self.receptive_field - 1].size())
-            probdist = F.softmax(self.forward(generated[:, :, t:t + self.receptive_field - 1]), dim=1)[:, :,
-                       -1].squeeze().detach().cpu().numpy()
-            output = torch.tensor([[[np.random.choice([0, 1], p=probdist)]]], device='cuda')
-            generated = torch.cat((generated, output), 2)
+            if t > 0:
+                current_input = outputs[-1]
+
+            x = self.forward(current_input)
+            print(x.size())
+            x = F.softmax(x, dim=2)
+
+            print(x, x.size())
+            break
+
+            outputs += [x.data]
 
         self.clear_buffer()
-        return generated[:, :, self.receptive_field:]
+        return torch.cat(outputs, 2)
 
     def clear_buffer(self):
         self.start_conv.clear_buffer()
@@ -288,29 +282,30 @@ train_dataloader = DataLoader(train_dataset, num_workers=CPU_CORES, batch_size=B
 val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
 model = CausalModel(kernel_size=3).cuda()
-#model.load_state_dict(torch.load("Mnist/model.pt"))
-loss_fn = CrossEntropyLoss(weight=torch.tensor([0.6]*64 + [0.3] * 64 + [0.1] * 128).cuda())
-optimizer = Adam(params=model.parameters(), lr=LR)
-
-for epoch in range(10):
-    print(f"Epoch: {epoch + 1}")
-    pbar = tqdm(train_dataloader)
-
-    mean_loss = 0
-
-    for x, _ in pbar:
-        y = x.cuda().squeeze()
-        yh = model.forward(y)
-        log_probs = F.softmax(yh)
-
-        loss = loss_fn(yh, y)
-        optimizer.zero_grad()
-        loss.backward()
-
-        optimizer.step()
-        pbar.set_description(desc=f"NLL={loss}")
-        mean_loss += loss
-    mean_loss = mean_loss / len(pbar)
-    print(mean_loss)
-
-torch.save(model.state_dict(), "Mnist/model.pt")
+model.load_state_dict(torch.load("Mnist/model.pt"))
+# loss_fn = CrossEntropyLoss()
+# optimizer = Adam(params=model.parameters(), lr=LR)
+#
+# for epoch in range(1):
+#     print(f"Epoch: {epoch + 1}")
+#     pbar = tqdm(train_dataloader)
+#
+#     mean_loss = 0
+#
+#     for x, _ in pbar:
+#         y = x.cuda().squeeze()
+#         yh = model.forward(y)
+#         log_probs = F.softmax(yh)
+#
+#         loss = loss_fn(yh, y)
+#         optimizer.zero_grad()
+#         loss.backward()
+#
+#         optimizer.step()
+#         pbar.set_description(desc=f"NLL={loss}")
+#         mean_loss += loss
+#     mean_loss = mean_loss / len(pbar)
+#     print(mean_loss)
+#
+# torch.save(model.state_dict(), "Mnist/model.pt")
+model.incremental_forward()

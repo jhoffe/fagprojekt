@@ -32,15 +32,10 @@ class CausalConv1d(nn.Module):
 EPS = 1.e-5
 
 
-def log_categorical(x, p, num_classes=256, reduction=None, dim=None):
+def log_categorical(x, p, num_classes=256, dim=None):
     x = F.one_hot(x.long(), num_classes)
     log_p = x * torch.log(torch.clamp(p, EPS, 1 - EPS))
-    if reduction == 'avg':
-        return torch.mean(log_p, dim)
-    elif reduction == 'sum':
-        return torch.sum(log_p, dim)
-    else:
-        return log_p
+    return torch.sum(log_p, dim)
 
 
 class WaveNIST(pl.LightningModule):
@@ -55,12 +50,10 @@ class WaveNIST(pl.LightningModule):
                                                         kernel_size=kernel_size, A=False, bias=True)] * layers)
         self.end_conv = CausalConv1d(in_channels=hidden, out_channels=output_classes, dilation=1,
                                      kernel_size=kernel_size, A=False, bias=True)
-
         self.activation = nn.LeakyReLU()
 
-
-    def loss_fn(self, x, p, reduction='sum'):
-        log_p = log_categorical(x, p, num_classes=self.output_classes, reduction=reduction, dim=-1)
+    def loss_fn(self, x, p):
+        log_p = log_categorical(x, p, num_classes=self.output_classes, reduction="sum", dim=-1).sum(-1)
         return log_p
 
     def forward(self, x, log=False):
@@ -96,12 +89,11 @@ class WaveNIST(pl.LightningModule):
 
     def discretize_input(self, x):
         return torch.bucketize(x, torch.tensor([1 / self.output_classes * i for i in range(self.output_classes - 1)],
-            device=self.device)).squeeze()
+                                               device=self.device)).squeeze()
 
     def training_step(self, batch, batch_idx):
         opt = self.optimizers()
         opt.zero_grad()
-
         x, _ = batch
         y = self.discretize_input(x)
         p = self.forward(x).permute(0, 2, 1)
@@ -142,8 +134,8 @@ input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(
 train_set = datasets.MNIST(root="MNIST", download=True, train=True, transform=input_transforms)
 val_set = datasets.MNIST(root="MNIST", download=True, train=False, transform=input_transforms)
 
-train_loader = DataLoader(train_set, batch_size=32, num_workers=8, shuffle=True)
-val_loader = DataLoader(val_set, batch_size=32, num_workers=8)
+train_loader = DataLoader(train_set, batch_size=32, num_workers=4, shuffle=True)
+val_loader = DataLoader(val_set, batch_size=32, num_workers=4)
 
 pl.seed_everything(42, workers=True)
 
@@ -151,8 +143,8 @@ logger = WandbLogger(project="wavenist")
 
 model = WaveNIST(output_classes=16, hidden=256, kernel_size=27, layers=3)
 
-trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                     devices=-1 if torch.cuda.is_available() else None, max_epochs=100, logger=logger,
-                     default_root_dir="models/")
-
-trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+# trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
+#                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100, logger=logger,
+#                      default_root_dir="models/")
+#
+# trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
