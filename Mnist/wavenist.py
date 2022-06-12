@@ -127,9 +127,9 @@ logger = WandbLogger(project="wavenist")
 model = WaveNIST(output_classes=16, hidden=512, kernel_size=13, layers=5)
 
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                     devices=-1 if torch.cuda.is_available() else None, max_epochs=1000,
+                     devices=-1 if torch.cuda.is_available() else None,
+                     max_epochs=50,
                      logger=logger,
-                     default_root_dir="models/",
-                     callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=10)])
+                     default_root_dir="models/")
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
