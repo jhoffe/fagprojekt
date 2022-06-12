@@ -59,7 +59,7 @@ class WaveNIST(pl.LightningModule):
         self.activation = nn.LeakyReLU()
 
     def loss_fn(self, x, p, reduction='sum'):
-        log_p = log_categorical(x, p, num_classes=self.output_classes, reduction=reduction)
+        log_p = log_categorical(x, p, num_classes=self.output_classes, reduction=reduction, dim=-1)
         return log_p
 
     def forward(self, x, log=False):
@@ -101,15 +101,15 @@ class WaveNIST(pl.LightningModule):
         x, _ = batch
         y = self.discretize_input(x)
         p = self.forward(x).permute(0, 2, 1)
-        loss = self.loss_fn(p, y)
+        loss = self.loss_fn(y, p)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, _ = batch
         y = self.discretize_input(x)
-        p = self.forward(x, log=True)
-        val_loss = self.loss_fn(p, y)
+        p = self.forward(x).permute(0, 2, 1)
+        val_loss = self.loss_fn(y, p)
         self.log("val_loss", val_loss)
 
         return val_loss
