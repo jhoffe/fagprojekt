@@ -3,7 +3,7 @@
 #BSUB -o batch_jobs/logs/train_wavenist_%J.out
 #BSUB -e batch_jobs/logs/train_wavenist_%J.err
 #BSUB -q gpuv100
-#BSUB -gpu "num=2:mode=exclusive_process"
+#BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 16
 #BSUB -R "rusage[mem=4G]"
 #BSUB -R "span[hosts=1]"
