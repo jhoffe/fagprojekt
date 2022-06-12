@@ -96,13 +96,16 @@ class WaveNIST(pl.LightningModule):
         val_loss = self.loss_fn(p, y)
         self.log("val_loss", val_loss)
 
+        return val_loss
+
+    def on_validation_end(self):
+        self.eval()
         generated = self.generate(32, 28 * 28)
         figs = self.logger.log_image(self.plot_generated(generated))
         self.logger.log_image(key="digits", images=figs)
         for fig in figs:
             plt.close(fig)
-
-        return val_loss
+        self.train()
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
