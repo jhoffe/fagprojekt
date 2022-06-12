@@ -3,7 +3,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from psutil import cpu_count
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.utils.data import DataLoader
@@ -30,6 +29,17 @@ class CausalConv1d(nn.Module):
         else:
             return conv_out
 
+EPS = 1.e-5
+
+def log_categorical(x, p, num_classes=256, reduction=None, dim=None):
+    x = F.one_hot(x.long(), num_classes)
+    log_p = x * torch.log(torch.clamp(p, EPS, 1 - EPS))
+    if reduction == 'avg':
+        return torch.mean(log_p, dim)
+    elif reduction == 'sum':
+        return torch.sum(log_p, dim)
+    else:
+        return log_p
 
 class WaveNIST(pl.LightningModule):
     def __init__(self, layers=3, hidden=256, kernel_size=3, output_classes=256):
@@ -44,7 +54,10 @@ class WaveNIST(pl.LightningModule):
                                      kernel_size=kernel_size, A=False, bias=True)
 
         self.activation = nn.LeakyReLU()
-        self.loss_fn = nn.NLLLoss()
+
+    def loss_fn(self, x, p, reduction='sum'):
+        log_p = log_categorical(x, p, num_classes=self.output_classes, reduction=reduction)
+        return log_p
 
     def forward(self, x, log=False):
         x = self.first_conv(x)
