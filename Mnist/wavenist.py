@@ -53,7 +53,7 @@ class WaveNIST(pl.LightningModule):
         self.activation = nn.LeakyReLU()
 
     def loss_fn(self, x, p):
-        log_p = log_categorical(x, p, num_classes=self.output_classes, reduction="sum", dim=-1).sum(-1)
+        log_p = log_categorical(x, p, num_classes=self.output_classes, dim=-1).sum(-1)
         return log_p
 
     def forward(self, x, log=False):
