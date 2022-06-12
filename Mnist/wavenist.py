@@ -43,7 +43,7 @@ class WaveNIST(pl.LightningModule):
         self.end_conv = CausalConv1d(in_channels=hidden, out_channels=output_classes, dilation=1,
                                      kernel_size=kernel_size, A=False, bias=True)
 
-        self.activation = nn.ReLU()
+        self.activation = nn.LeakyReLU()
         self.loss_fn = nn.NLLLoss()
 
     def forward(self, x, log=False):
