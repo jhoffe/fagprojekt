@@ -82,7 +82,7 @@ class WaveNIST(pl.LightningModule):
         figs = []
         for i in range(generated.size(0)):
             fig = plt.figure()
-            plt.imshow(generated[i, :].detach().cpu().numpy().reshape((28, 28)), cmap="grey")
+            plt.imshow(generated[i, :].detach().cpu().numpy().reshape((28, 28)), cmap="gray")
             figs.append(fig)
 
         return figs
