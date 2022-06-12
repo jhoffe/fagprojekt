@@ -54,7 +54,7 @@ class WaveNIST(pl.LightningModule):
 
     def loss_fn(self, x, p):
         log_p = log_categorical(x, p, num_classes=self.output_classes, dim=-1).sum(-1)
-        return log_p
+        return -log_p.sum()
 
     def forward(self, x, log=False):
         x = self.first_conv(x)
