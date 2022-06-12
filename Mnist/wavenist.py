@@ -98,9 +98,11 @@ class WaveNIST(pl.LightningModule):
 
         generated = self.generate(32, 28 * 28)
         figs = self.logger.log_image(self.plot_generated(generated))
-        self.logger.log_image(figs)
+        self.logger.log_image(key="digits", images=figs)
         for fig in figs:
             plt.close(fig)
+
+        return val_loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
@@ -125,6 +127,7 @@ trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=1000,
                      logger=logger,
                      default_root_dir="models/",
+                     strategy="ddp",
                      callbacks=[EarlyStopping(monitor="val_loss", mode="min")])
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
