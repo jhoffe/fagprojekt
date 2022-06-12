@@ -124,7 +124,7 @@ pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(output_classes=16, hidden=512, kernel_size=13, layers=5)
+model = WaveNIST(output_classes=16, hidden=256, kernel_size=27, layers=3)
 
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None,
