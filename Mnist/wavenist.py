@@ -130,7 +130,6 @@ trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=1000,
                      logger=logger,
                      default_root_dir="models/",
-                     strategy="ddp",
                      callbacks=[EarlyStopping(monitor="val_loss", mode="min")])
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
