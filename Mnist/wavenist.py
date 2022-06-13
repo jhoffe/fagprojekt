@@ -39,10 +39,9 @@ def log_categorical(x, p, num_classes=256, dim=None):
 
 
 class WaveNIST(pl.LightningModule):
-    def __init__(self, layers=3, hidden=256, kernel_size=3, output_classes=256):
+    def __init__(self, layers=3, hidden=256, kernel_size=85, output_classes=16):
         super(WaveNIST, self).__init__()
         self.output_classes = output_classes
-        #self.automatic_optimization = False
 
         self.first_conv = CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True,
                                        bias=True)
@@ -88,8 +87,9 @@ class WaveNIST(pl.LightningModule):
         return figs
 
     def discretize_input(self, x):
-        return torch.bucketize(x, torch.tensor([1 / self.output_classes * i for i in range(self.output_classes - 1)],
+        x = torch.bucketize(x, torch.tensor([1 / self.output_classes * i for i in range(self.output_classes - 1)],
                                                device=self.device)).squeeze()
+        return x
 
     def training_step(self, batch, batch_idx):
         x, _ = batch
@@ -121,23 +121,26 @@ class WaveNIST(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
-    def manual_backward(self, loss):
-        loss.backward(retain_graph=True)
-
 
 input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: x.flatten(1))])
 
 train_set = datasets.MNIST(root="MNIST", download=True, train=True, transform=input_transforms)
 val_set = datasets.MNIST(root="MNIST", download=True, train=False, transform=input_transforms)
 
-train_loader = DataLoader(train_set, batch_size=32, num_workers=4, shuffle=True)
-val_loader = DataLoader(val_set, batch_size=32, num_workers=4)
+train_loader = DataLoader(train_set, batch_size=64, num_workers=4, shuffle=True)
+val_loader = DataLoader(val_set, batch_size=64, num_workers=4)
 
 pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(output_classes=16, hidden=256, kernel_size=27, layers=3)
+model = WaveNIST(output_classes=16, hidden=256, kernel_size=85, layers=3)\
+#.load_from_checkpoint("Mnist/model.ckpt")
+# model.eval()
+#
+# gen = model.forward(model.generate(1, 784))
+# print(gen, gen.size())
+# print(torch.multinomial(gen[:, :, 380], 1))
 
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100, logger=logger,

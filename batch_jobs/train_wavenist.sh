@@ -2,7 +2,7 @@
 #BSUB -J train_wavenist
 #BSUB -o batch_jobs/logs/train_wavenist_%J.out
 #BSUB -e batch_jobs/logs/train_wavenist_%J.err
-#BSUB -q gpuv100
+#BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 12
 #BSUB -R "rusage[mem=4G]"
