@@ -240,7 +240,7 @@ if not (os.path.exists(result_dir)):
 name = 'arm'
 
 D = 784  # input dimension
-M = 256  # the number of neurons in scale (s) and translation (t) nets
+M = 512  # the number of neurons in scale (s) and translation (t) nets
 
 lr = 1e-3  # learning rate
 num_epochs = 1000  # max. number of epochs
