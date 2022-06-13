@@ -39,7 +39,7 @@ def log_categorical(x, p, num_classes=256, dim=None):
 
 
 class WaveNIST(pl.LightningModule):
-    def __init__(self, layers=3, hidden=256, kernel_size=7, output_classes=16):
+    def __init__(self, layers=2, hidden=256, kernel_size=7, output_classes=17):
         super(WaveNIST, self).__init__()
         self.automatic_optimization = False
         self.output_classes = output_classes

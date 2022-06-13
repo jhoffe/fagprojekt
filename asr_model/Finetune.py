@@ -21,7 +21,7 @@ RESULTS_PATH = os.environ['RESULTS_PATH']
 NAME = os.environ['NAME']
 CPU_CORES = int(os.environ['CPU_CORES'])
 LOAD_SPECTROGRAMS = int(os.environ["LOAD_SPECTROGRAMS"])
-PRETRAINED_MODEL_PATH = os.environ(['PRETRAINED_MODEL_PATH'])
+PRETRAINED_MODEL_PATH = os.environ['PRETRAINED_MODEL_PATH']
 
 assert TRAIN_UPDATES > 0
 assert BATCH_SIZE > 0
@@ -56,12 +56,14 @@ train_loader = DataLoader(train_dataset, num_workers=CPU_CORES, pin_memory=True,
 val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, collate_fn=val_dataset.collate,
                         batch_size=BATCH_SIZE, prefetch_factor=2)
 
-trainedModel = torch.load(PRETRAINED_MODEL_PATH) # For CPU: remove .cuda()
+model_params = torch.load(PRETRAINED_MODEL_PATH) # For CPU: remove .cuda()
+
+model = ASRModel().load_state_dict(model_params)
 
 LR = 3e-4
 
 runner = Runner(
-    model=trainedModel,
+    model=model,
     name=NAME,
     train_loader=train_loader,
     val_loader=val_loader,
