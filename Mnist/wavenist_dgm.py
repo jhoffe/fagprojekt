@@ -259,7 +259,7 @@ net = nn.Sequential(
     nn.LeakyReLU(),
     CausalConv1d(in_channels=M, out_channels=M, dilation=4, kernel_size=kernel, A=False, bias=True),
     nn.LeakyReLU(),
-    CausalConv1d(in_channels=M, out_channels=num_vals, dilation=1, kernel_size=kernel, A=False, bias=True))
+    CausalConv1d(in_channels=M, out_channels=num_vals, dilation=8, kernel_size=kernel, A=False, bias=True))
 
 model = ARM(net, D=D, num_vals=num_vals).cuda()
 
