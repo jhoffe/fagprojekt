@@ -137,9 +137,7 @@ def samples_real(name, test_loader):
     plt.close()
 
 
-def samples_generated(name, data_loader, extra_name=''):
-    x = next(iter(data_loader)).detach().numpy()
-
+def samples_generated(name, extra_name=''):
     # GENERATIONS-------
     model_best = torch.load(name + '.model')
     model_best.eval()
@@ -212,7 +210,7 @@ def training(name, max_patience, num_epochs, model, optimizer, training_loader, 
                 best_nll = loss_val
                 patience = 0
 
-                samples_generated(name, val_loader, extra_name="_epoch_" + str(e))
+                samples_generated(name, extra_name="_epoch_" + str(e))
             else:
                 patience = patience + 1
 
