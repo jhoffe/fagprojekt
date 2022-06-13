@@ -240,7 +240,7 @@ if not (os.path.exists(result_dir)):
 name = 'arm'
 
 D = 784  # input dimension
-M = 256  # the number of neurons in scale (s) and translation (t) nets
+M = 512  # the number of neurons in scale (s) and translation (t) nets
 
 lr = 1e-3  # learning rate
 num_epochs = 1000  # max. number of epochs
@@ -255,9 +255,11 @@ kernel = 7
 net = nn.Sequential(
     CausalConv1d(in_channels=1, out_channels=M, dilation=1, kernel_size=kernel, A=True, bias=True),
     nn.LeakyReLU(),
-    CausalConv1d(in_channels=M, out_channels=M, dilation=1, kernel_size=kernel, A=False, bias=True),
+    CausalConv1d(in_channels=M, out_channels=M, dilation=2, kernel_size=kernel, A=False, bias=True),
     nn.LeakyReLU(),
-    CausalConv1d(in_channels=M, out_channels=M, dilation=1, kernel_size=kernel, A=False, bias=True),
+    CausalConv1d(in_channels=M, out_channels=M, dilation=4, kernel_size=kernel, A=False, bias=True),
+    nn.LeakyReLU(),
+    CausalConv1d(in_channels=M, out_channels=M, dilation=8, kernel_size=kernel, A=False, bias=True),
     nn.LeakyReLU(),
     CausalConv1d(in_channels=M, out_channels=num_vals, dilation=1, kernel_size=kernel, A=False, bias=True))
 
