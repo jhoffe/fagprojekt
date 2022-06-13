@@ -37,5 +37,6 @@ export CPU_CORES=16
 export LOAD_SPECTROGRAMS=1
 export WANDB_API_KEY="5403fe6e39e261a91fd0a604a0ea7e22c75927cf"
 export WANDB_RUN_GROUP="finetune"
+export PRETRAINED_MODEL_PATH="asr_model/models/asr_model_authentic.pt"
 
 python3 asr_model/Finetune.py
