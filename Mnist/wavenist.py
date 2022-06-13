@@ -46,9 +46,10 @@ class WaveNIST(pl.LightningModule):
 
         self.first_conv = CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True,
                                        bias=True)
-        self.hidden_convs = nn.ModuleList([CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=1,
-                                                        kernel_size=kernel_size, A=False, bias=True)] * layers)
-        self.end_conv = CausalConv1d(in_channels=hidden, out_channels=output_classes, dilation=1,
+        self.hidden_convs = nn.ModuleList([CausalConv1d(in_channels=hidden, out_channels=hidden,
+                                                        dilation=2 ** (layer + 1), kernel_size=kernel_size, A=False,
+                                                        bias=True) for layer in range(layers)])
+        self.end_conv = CausalConv1d(in_channels=hidden, out_channels=output_classes, dilation=2 ** (layers + 1),
                                      kernel_size=kernel_size, A=False, bias=True)
         self.activation = nn.LeakyReLU()
 
@@ -89,7 +90,7 @@ class WaveNIST(pl.LightningModule):
 
     def discretize_input(self, x):
         x = torch.bucketize(x, torch.tensor([1 / self.output_classes * i for i in range(self.output_classes - 1)],
-                                               device=self.device)).squeeze()
+                                            device=self.device)).squeeze()
         return x
 
     def training_step(self, batch, batch_idx):
@@ -142,8 +143,8 @@ pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(output_classes=16, hidden=256, kernel_size=85, layers=3)
-#.load_from_checkpoint("Mnist/model.ckpt")
+model = WaveNIST(output_classes=17, hidden=256, kernel_size=7, layers=2)
+# .load_from_checkpoint("Mnist/model.ckpt")
 # model.eval()
 #
 # gen = model.forward(model.generate(1, 784))
