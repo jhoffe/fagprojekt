@@ -123,7 +123,7 @@ class WaveNIST(pl.LightningModule):
         self.train()
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adamax([p for p in model.parameters() if p.requires_grad], lr=1e-3)
         return optimizer
 
     def manual_backward(self, loss):
