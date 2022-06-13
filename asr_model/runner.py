@@ -10,6 +10,7 @@ from asr.data.preprocessors import TextPreprocessor
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import CosineAnnealingLR
 import os
 from asr.data.val_analysis import ValidationAnalysis
 
@@ -28,6 +29,7 @@ class Runner:
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        self.lr_scheduler = CosineAnnealingLR(self.optimizer, T_max=100)
         #self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4, factor=0.5) # didnt work as intended
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
@@ -137,12 +139,10 @@ class Runner:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            # self.lr_scheduler.step()
 
             self._track_train_stats(i)
 
             #if (i + 1) % (self.train_logger.total // 10):
-            #    self.lr_scheduler.step(loss) didnt work as intended
 
             if (i % self.validate_every == 0 and i != 0) or i + 1 == self.train_logger.total:
                 analysis = self.validate(i, analysis=True)
@@ -167,5 +167,13 @@ class Runner:
                     self.save()
                     self.best_wer = wer
 
+
+
                 self.train_logger.reset()
                 self.model.train()
+                if i >= 100000:
+                    self.lr_scheduler.step()
+                    wandb.log({
+                        "last_learning_rate": self.lr_scheduler.get_last_lr(),
+                        "learning_rate": self.lr_scheduler.get_lr()
+                    })
