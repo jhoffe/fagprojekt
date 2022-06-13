@@ -58,7 +58,8 @@ val_loader = DataLoader(val_dataset, num_workers=CPU_CORES, pin_memory=True, col
 
 model_params = torch.load(PRETRAINED_MODEL_PATH) # For CPU: remove .cuda()
 
-model = ASRModel().load_state_dict(model_params)
+model = ASRModel().cuda()
+model.load_state_dict(model_params)
 
 LR = 3e-4
 
