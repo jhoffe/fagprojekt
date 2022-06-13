@@ -88,7 +88,7 @@ class ARM(nn.Module):
         return log_p
 
     def sample(self, batch_size):
-        x_new = torch.zeros((batch_size, self.D))
+        x_new = torch.zeros((batch_size, self.D)).cuda()
 
         for d in range(self.D):
             p = self.f(x_new)
@@ -147,11 +147,11 @@ def samples_generated(name, data_loader, extra_name=''):
     num_x = 4
     num_y = 4
     x = model_best.sample(num_x * num_y)
-    x = x.detach().numpy()
+    x = x.detach().cpu().numpy()
 
     fig, ax = plt.subplots(num_x, num_y)
     for i, ax in enumerate(ax.flatten()):
-        plottable_image = np.reshape(x[i], (8, 8))
+        plottable_image = np.reshape(x[i], (28, 28))
         ax.imshow(plottable_image, cmap='gray')
         ax.axis('off')
 
@@ -183,7 +183,7 @@ def training(name, max_patience, num_epochs, model, optimizer, training_loader, 
             if hasattr(model, 'dequantization'):
                 if model.dequantization:
                     batch = batch + torch.rand(batch.shape)
-            loss = model.forward(batch)
+            loss = model.forward(batch.cuda())
 
             wandb.log({
                 "train_loss": loss.detach().cpu().numpy(),
