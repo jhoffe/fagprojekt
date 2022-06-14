@@ -267,7 +267,7 @@ model = ARM(net, D=D, num_vals=num_vals).cuda()
 print(summary(model, torch.zeros(1, 784).float().cuda(), show_input=False, show_hierarchical=False))
 
 # OPTIMIZER
-optimizer = torch.optim.Adamax([p for p in model.parameters() if p.requires_grad == True], lr=lr)
+optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad == True], lr=lr)
 
 # Training procedure
 
