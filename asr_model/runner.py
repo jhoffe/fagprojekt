@@ -187,4 +187,5 @@ class Runner:
                     })
 
     def get_summary(self):
-        print(summary(model=self.model, input_size=(64, 80, 500)))
+        seq_lens = torch.tensor([500] * 64).type(torch.int64)
+        summary(model=self.model, input_data=(torch.zeros((64, 80, 500)), seq_lens))

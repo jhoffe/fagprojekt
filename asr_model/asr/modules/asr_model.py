@@ -49,6 +49,9 @@ class ASRModel(nn.Module):
             Tensor: Output of shape TNF.
         """
 
+        if seq_lens.device != -1:
+            seq_lens = seq_lens.cpu()
+
         x = self.conv1d_layer(input)
         x = x.permute(2, 0, 1)
         new_seq_lens = torch.ceil(seq_lens / 2).long()

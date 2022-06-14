@@ -273,10 +273,10 @@ optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad =
 
 # Training procedure
 
-run = wandb.init(project="wavenist", entity="fagprojekt-synthetic-asr")
-nll_val = training(name=result_dir + name, max_patience=max_patience, num_epochs=num_epochs, model=model,
-                   optimizer=optimizer,
-                   training_loader=training_loader, val_loader=val_loader)
-
-plot_curve(result_dir + name, nll_val)
-run.finish()
+# run = wandb.init(project="wavenist", entity="fagprojekt-synthetic-asr")
+# nll_val = training(name=result_dir + name, max_patience=max_patience, num_epochs=num_epochs, model=model,
+#                    optimizer=optimizer,
+#                    training_loader=training_loader, val_loader=val_loader)
+#
+# plot_curve(result_dir + name, nll_val)
+# run.finish()

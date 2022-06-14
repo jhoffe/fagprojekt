@@ -1,7 +1,7 @@
 #!/bin/sh
-#BSUB -J train_asr_authentic
-#BSUB -o batch_jobs/logs/train_asr_authentic_%J.out
-#BSUB -e batch_jobs/logs/train_asr_authentic_%J.err
+#BSUB -J evaluate_models
+#BSUB -o batch_jobs/logs/evaluate_models_%J.out
+#BSUB -e batch_jobs/logs/evaluate_models_%J.err
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 16
