@@ -92,6 +92,6 @@ reg = LinearRegression().fit(new_X, new_y)
 
 print("Plotting")
 spect_coef = reg.coef_.reshape((feature_count, max_spect_length))
-plt.figure(figsize=(8, 16))
+plt.figure(figsize=(30, 16))
 sns.heatmap(spect_coef, cmap="YlGnBu")
 plt.savefig(f"spect_heatmap_{NAME}.png")
