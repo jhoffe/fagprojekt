@@ -14,6 +14,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 import os
 from asr.data.val_analysis import ValidationAnalysis
 
+from torchinfo import summary
+
 '''
 This is the Runner script containing the utmost important wheel in the machine of this project. 
 '''
@@ -183,3 +185,6 @@ class Runner:
                     wandb.log({
                         "last_learning_rate": self.lr_scheduler.get_last_lr()[-1]
                     })
+
+    def get_summary(self):
+        print(summary(model=self.model, input_size=(64, 80, 500)))

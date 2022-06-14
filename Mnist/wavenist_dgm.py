@@ -5,12 +5,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_model_summary import summary
+from torchinfo import summary
 from sklearn.datasets import load_digits
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
 import wandb
+
+
 
 class CausalConv1d(nn.Module):
     """
@@ -263,8 +265,8 @@ net = nn.Sequential(
 
 model = ARM(net, D=D, num_vals=num_vals).cuda()
 
-# Print the summary (like in Keras)
-print(summary(model, torch.zeros(1, 784).float().cuda(), show_input=False, show_hierarchical=False))
+# Print the summary
+print(summary(model=model, input_size=(64, 784)))
 
 # OPTIMIZER
 optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad == True], lr=lr)

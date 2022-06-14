@@ -80,6 +80,8 @@ runner = Runner(
     lr=LR
 )
 
+runner.get_summary()
+
 # Weights & Biases is used to track progress during training.
 
 run = wandb.init(project="asr", entity="fagprojekt-synthetic-asr", reinit=True, config={
