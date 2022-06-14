@@ -2,6 +2,8 @@
 #BSUB -J spect_heatmaps
 #BSUB -o batch_jobs/logs/spect_heatmaps_%J.out
 #BSUB -e batch_jobs/logs/spect_heatmaps_%J.err
+#BSUB -q gpua100
+#BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 16
 #BSUB -R "rusage[mem=8G]"
 #BSUB -R "span[hosts=1]"
