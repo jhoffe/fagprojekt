@@ -10,7 +10,7 @@ from asr.data.preprocessors import TextPreprocessor
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim.lr_scheduler import CosineAnnealingLR, CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import CosineAnnealingLR
 import os
 from asr.data.val_analysis import ValidationAnalysis
 
@@ -29,7 +29,7 @@ class Runner:
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        self.lr_scheduler = CosineAnnealingWarmRestarts(self.optimizer, T_0=100000, eta_min=5e-5)
+        self.lr_scheduler = CosineAnnealingLR(self.optimizer, T_max=75000, eta_min=5e-5)
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
         self.models_path = models_path
@@ -175,8 +175,8 @@ class Runner:
 
                 self.train_logger.reset()
                 self.model.train()
-                if i >= 100000:
-                    self.lr_scheduler.step(epoch=i/iters)
+                if i >= 75000:
+                    self.lr_scheduler.step(epoch=i)
                     wandb.log({
                         "last_learning_rate": self.lr_scheduler.get_last_lr()[-1]
                     })
