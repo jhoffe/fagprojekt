@@ -177,6 +177,5 @@ class Runner:
                 if i >= 100000:
                     self.lr_scheduler.step(epoch=i/iters)
                     wandb.log({
-                        "last_learning_rate": self.lr_scheduler.get_last_lr()[0],
-                        "learning_rate": self.lr_scheduler.get_lr()[0]
+                        "last_learning_rate": self.lr_scheduler.get_last_lr()[-1]
                     })
