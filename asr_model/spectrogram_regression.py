@@ -12,6 +12,8 @@ from sklearn.linear_model import LinearRegression
 import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from sklearn.preprocessing import normalize
+
 
 VAL_SOURCE = os.environ["TEST_DATASET"]
 MODEL_PATH = os.environ["MODEL_PATH"]
@@ -77,6 +79,9 @@ for i, (batch, batch_wer) in enumerate(runner.validate(regression=True)):
     y += batch_wer
     count += x.shape[0]
 
+    if i > 5:
+        break
+
 feature_count = 80
 
 new_X = np.zeros((count, max_spect_length * feature_count))
@@ -87,11 +92,16 @@ for i, batch in tqdm(enumerate(X), desc="Padding batches"):
 
 new_y = np.array(y)
 
+print("Normalizing")
+#norm_X = (new_X - new_X.min(axis=0))/(new_X.max(axis=0) - new_X.min(axis=0))
+
 print("Fitting linear regression")
 reg = LinearRegression().fit(new_X, new_y)
 
 print("Plotting")
-spect_coef = reg.coef_.reshape((feature_count, max_spect_length))
+coef = (reg.coef_ - reg.coef_.min())/(reg.coef_.max() - reg.coef_.min())
+spect_coef_norm = coef.reshape((feature_count, max_spect_length))
+
 plt.figure(figsize=(30, 16))
-sns.heatmap(spect_coef, cmap="YlGnBu")
+sns.heatmap(spect_coef_norm)
 plt.savefig(f"spect_heatmap_{NAME}.png")
