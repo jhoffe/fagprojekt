@@ -29,8 +29,7 @@ class Runner:
         self.val_loader = val_loader
         self.loss = nn.CTCLoss(reduction='sum').cuda()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        self.lr_scheduler = CosineAnnealingLR(self.optimizer, T_max=75000, eta_min = 5e-5)
-        #self.lr_scheduler = ReduceLROnPlateau(self.optimizer, patience=1, min_lr=3e-4, factor=0.5) # didnt work as intended
+        self.lr_scheduler = CosineAnnealingWarmRestarts(self.optimizer, T_0=100000, eta_min=5e-5)
         self.validate_every = validate_every
         self.text_preprocessor = TextPreprocessor()
         self.models_path = models_path
@@ -82,13 +81,13 @@ class Runner:
 
         return loss, hyp_batch, ref_batch
 
-    def validate(self, batch_index=None, analysis=False):
+    def validate(self, batch_index=None, analysis=False, regression=False):
         self.model.eval()
 
         analysis_track = ValidationAnalysis() if analysis else None
 
         for i, (batch, paths) in enumerate(self.val_logger(self.val_loader)):
-            _, hyp_batch, ref_batch = self.forward_pass(batch, with_individual=analysis)
+            _, hyp_batch, ref_batch = self.forward_pass(batch, with_individual=analysis or regression)
 
             if analysis:
                 analysis_track.append_batch(
@@ -97,6 +96,9 @@ class Runner:
                     self.wer_metric.current_batch_errors,
                     self.cer_metric.current_batch_errors
                 )
+
+            if regression:
+                yield batch, self.wer_metric.current_batch_errors
 
         if batch_index is not None:
             self.val_stats.track([batch_index] + [m.running for m in self.val_logger.metric_trackers])
@@ -173,8 +175,8 @@ class Runner:
 
                 self.train_logger.reset()
                 self.model.train()
-                if i >= 75000:
-                    self.lr_scheduler.step(epoch=i)
+                if i >= 100000:
+                    self.lr_scheduler.step(epoch=i/iters)
                     wandb.log({
                         "last_learning_rate": self.lr_scheduler.get_last_lr()[-1]
                     })
