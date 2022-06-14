@@ -86,6 +86,8 @@ class Runner:
 
         analysis_track = ValidationAnalysis() if analysis else None
 
+        regression_params = []
+
         for i, (batch, paths) in enumerate(self.val_logger(self.val_loader)):
             _, hyp_batch, ref_batch = self.forward_pass(batch, with_individual=analysis or regression)
 
@@ -98,11 +100,14 @@ class Runner:
                 )
 
             if regression:
-                yield batch, self.wer_metric.current_batch_errors
+                regression_params.append((batch, self.wer_metric.current_batch_errors))
 
         if batch_index is not None:
             self.val_stats.track([batch_index] + [m.running for m in self.val_logger.metric_trackers])
             self.val_stats.write()
+
+        if regression:
+            return regression_params
 
         if analysis:
             return analysis_track
@@ -170,8 +175,6 @@ class Runner:
                 if wer < self.best_wer:
                     self.save()
                     self.best_wer = wer
-
-
 
                 self.train_logger.reset()
                 self.model.train()
