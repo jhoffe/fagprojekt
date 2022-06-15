@@ -118,6 +118,9 @@ class WaveNIST(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
+    def on_save_checkpoint(self, checkpoint):
+        self.log("best_epoch", self.current_epoch)
+
 
 input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: x.flatten(1))])
 
