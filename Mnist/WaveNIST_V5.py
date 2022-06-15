@@ -135,7 +135,6 @@ pl.seed_everything(42, workers=True)
 logger = WandbLogger(project="wavenist")
 
 model = WaveNIST(hidden=512, kernel_size=7)
-model.load_from_checkpoint(checkpoint_path="models/final_wavenist.ckpt")
 
 summary(model, (64, 1, 784), col_names=[
     "input_size",
