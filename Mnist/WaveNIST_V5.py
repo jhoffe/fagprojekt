@@ -7,6 +7,7 @@ from torch import nn
 from torch.nn import BCELoss
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 
 class CausalConv1d(nn.Module):
@@ -125,6 +126,7 @@ model = WaveNIST(hidden=512, kernel_size=7)
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
                      logger=logger,
+                     callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=15)],
                      default_root_dir="models/")
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
