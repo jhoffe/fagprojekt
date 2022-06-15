@@ -99,7 +99,7 @@ print("Fitting linear regression")
 reg = LinearRegression().fit(new_X, new_y)
 
 print("Plotting")
-coef = (reg.coef_ - reg.coef_.min())/(reg.coef_.max() - reg.coef_.min()) - 1
+coef = (reg.coef_ - reg.coef_.mean())/reg.coef_.std()
 #coef = normalize(reg.coef_.reshape(1, -1), axis=0)
 spect_coef_norm = coef.reshape((feature_count, max_spect_length))
 
