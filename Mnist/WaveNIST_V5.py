@@ -42,13 +42,13 @@ class WaveNIST(pl.LightningModule):
         self.net = nn.Sequential(
             CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True, bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=2, kernel_size=kernel_size, A=True,
+            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=2, kernel_size=kernel_size, A=False,
                          bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=True,
+            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=False,
                          bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=True, bias=True),
+            CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=False, bias=True),
             nn.Sigmoid()
         )
 
@@ -61,7 +61,8 @@ class WaveNIST(pl.LightningModule):
 
         for t in range(self.output_size):
             p = self.forward(generated).squeeze()
-            generated[:, 0, t] = p[:, t]
+            p_sample = torch.bernoulli(p)
+            generated[:, 0, t] = p_sample[:, t]
 
         return generated.squeeze()
 
