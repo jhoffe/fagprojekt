@@ -92,7 +92,7 @@ class WaveNIST(pl.LightningModule):
 
     def on_validation_end(self):
         self.eval()
-        generated = self.generate(32, 28 * 28)
+        generated = self.generate(32)
         figs = self.plot_generated(generated)
         self.logger.log_image(key="digits", images=figs)
         for fig in figs:
