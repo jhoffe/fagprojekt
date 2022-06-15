@@ -48,7 +48,10 @@ class WaveNIST(pl.LightningModule):
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=False,
                          bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=False, bias=True),
+            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=8, kernel_size=kernel_size, A=False,
+                         bias=True),
+            nn.ReLU(),
+            CausalConv1d(in_channels=hidden, out_channels=1, dilation=16, kernel_size=kernel_size, A=False, bias=True),
             nn.Sigmoid()
         )
 
@@ -117,7 +120,7 @@ pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(hidden=256, kernel_size=7)
+model = WaveNIST(hidden=512, kernel_size=7)
 
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
