@@ -140,7 +140,7 @@ summary(model, (64, 1, 784), col_names=[
     "kernel_size"
 ])
 
-model_checkpoint = ModelCheckpoint(dirpath="models/", save_top_k=3, monitor="val_loss")
+model_checkpoint = ModelCheckpoint(dirpath="models/finals/", save_top_k=3, monitor="val_loss")
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
                      logger=logger,
