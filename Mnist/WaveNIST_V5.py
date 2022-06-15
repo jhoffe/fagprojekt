@@ -64,7 +64,7 @@ class WaveNIST(pl.LightningModule):
             p_sample = torch.bernoulli(p)
             generated[:, 0, t] = p_sample[:, 0]
 
-        return torch.bernoulli(generated.squeeze())
+        return generated.squeeze()
 
     @staticmethod
     def plot_generated(generated):
