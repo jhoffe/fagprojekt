@@ -6,10 +6,9 @@ from pytorch_lightning.callbacks import RichModelSummary, RichProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
-from torch.nn import BCELoss
+from torch.nn import BCELoss, CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from torchinfo import summary
 
 
 class CausalConv1d(nn.Module):
@@ -41,9 +40,9 @@ class WaveNIST(pl.LightningModule):
         super(WaveNIST, self).__init__()
         self.output_size = output_size
 
-        self.loss_fn = BCELoss()
+        self.loss_fn = CrossEntropyLoss()
         self.net = nn.ModuleList([
-            CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True, bias=True),
+            CausalConv1d(in_channels=256, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True, bias=True),
             nn.ReLU(),
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=2, kernel_size=kernel_size, A=False,
                          bias=True),
@@ -54,8 +53,8 @@ class WaveNIST(pl.LightningModule):
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=8, kernel_size=kernel_size, A=False,
                          bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=1, dilation=16, kernel_size=kernel_size, A=False, bias=True),
-            nn.Sigmoid()
+            CausalConv1d(in_channels=hidden, out_channels=256, dilation=16, kernel_size=kernel_size, A=False, bias=True),
+            nn.Softmax(dim=1)
         ])
 
     def forward(self, x):
@@ -66,12 +65,12 @@ class WaveNIST(pl.LightningModule):
 
     @torch.no_grad()
     def generate(self, batch_size):
-        generated = torch.zeros((batch_size, 1, self.output_size), device=self.device)
+        generated = torch.zeros((batch_size, 256, self.output_size), device=self.device)
 
         for t in range(self.output_size):
-            p = self.forward(generated).squeeze()
-            p_sample = torch.bernoulli(p)
-            generated[:, 0, t] = p_sample[:, t]
+            p = self.forward(generated).permute(0, 2, 1).T
+            p_sample = torch.multinomial(p[:, t, :], num_samples=1)
+            generated[:, :, t] = p_sample[:, 0]
 
         return generated.squeeze()
 
@@ -87,14 +86,16 @@ class WaveNIST(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, _ = batch
-        p = self.forward(x).squeeze()
+        input = F.one_hot(x.long(), num_classes=256).squeeze().permute(0, 2, 1)
+        p = self.forward(input.float())
         loss = self.loss_fn(p, x.squeeze())
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, _ = batch
-        p = self.forward(x).squeeze()
+        input = F.one_hot(x.long(), num_classes=256).squeeze().permute(0, 2, 1)
+        p = self.forward(input.float())
         val_loss = self.loss_fn(p, x.squeeze())
         self.log("val_loss", val_loss)
 
@@ -113,8 +114,11 @@ class WaveNIST(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
-
-input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: x.flatten(1))])
+input_transforms = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Lambda(lambda x: x.flatten(1)),
+    transforms.Lambda(lambda x: torch.bucketize(x, torch.tensor([1/256 * i for i in range(1, 256)])))
+])
 
 train_set = datasets.MNIST(root="MNIST", download=True, train=True, transform=input_transforms)
 val_set = datasets.MNIST(root="MNIST", download=True, train=False, transform=input_transforms)
