@@ -61,7 +61,7 @@ class WaveNIST(pl.LightningModule):
 
         for t in range(self.output_size):
             p = self.forward(generated).squeeze()
-            generated[:, 0, t] = p[:, 0]
+            generated[:, 0, t] = p[:, t]
 
         return generated.squeeze()
 
