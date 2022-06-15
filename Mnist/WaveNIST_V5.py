@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from pytorch_lightning.callbacks import RichModelSummary, RichProgressBar
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.nn import BCELoss
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 
 class CausalConv1d(nn.Module):
@@ -40,7 +41,7 @@ class WaveNIST(pl.LightningModule):
         self.output_size = output_size
 
         self.loss_fn = BCELoss()
-        self.net = nn.Sequential(
+        self.net = nn.ModuleList([
             CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True, bias=True),
             nn.ReLU(),
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=2, kernel_size=kernel_size, A=False,
@@ -54,10 +55,13 @@ class WaveNIST(pl.LightningModule):
             nn.ReLU(),
             CausalConv1d(in_channels=hidden, out_channels=1, dilation=16, kernel_size=kernel_size, A=False, bias=True),
             nn.Sigmoid()
-        )
+        ])
 
     def forward(self, x):
-        return self.net(x)
+        for h in self.net:
+            x = h(x)
+
+        return x
 
     @torch.no_grad()
     def generate(self, batch_size):
@@ -101,7 +105,7 @@ class WaveNIST(pl.LightningModule):
         figs = self.plot_generated(generated)
         self.logger.log_image(key="digits", images=figs)
         for fig in figs:
-             plt.close(fig)
+            plt.close(fig)
         self.train()
 
     def configure_optimizers(self):
@@ -126,7 +130,8 @@ model = WaveNIST(hidden=512, kernel_size=7)
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
                      logger=logger,
-                     callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=15)],
+                     callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=15), RichProgressBar(),
+                                RichModelSummary()],
                      default_root_dir="models/")
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
