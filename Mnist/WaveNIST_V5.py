@@ -42,10 +42,13 @@ class WaveNIST(pl.LightningModule):
         self.net = nn.Sequential(
             CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True, bias=True),
             nn.Sigmoid(),
-            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=False,
+            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=2, kernel_size=kernel_size, A=True,
                          bias=True),
             nn.Sigmoid(),
-            CausalConv1d(in_channels=hidden, out_channels=1, dilation=1, kernel_size=kernel_size, A=False, bias=True),
+            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=True,
+                         bias=True),
+            nn.Sigmoid(),
+            CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=True, bias=True),
             nn.Sigmoid()
         )
 
