@@ -100,7 +100,7 @@ reg = LinearRegression().fit(new_X, new_y)
 
 print("Plotting")
 #coef = (reg.coef_ - reg.coef_.min())/(reg.coef_.max() - reg.coef_.min())
-coef = normalize(reg.coef_.reshape(1, -1), axis=1)
+coef = normalize(reg.coef_.reshape(1, -1), axis=0)
 spect_coef_norm = coef.reshape((feature_count, max_spect_length))
 
 plt.figure(figsize=(30, 16))
