@@ -41,13 +41,13 @@ class WaveNIST(pl.LightningModule):
         self.loss_fn = BCELoss()
         self.net = nn.Sequential(
             CausalConv1d(in_channels=1, out_channels=hidden, dilation=1, kernel_size=kernel_size, A=True, bias=True),
-            nn.Sigmoid(),
+            nn.ReLU(),
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=2, kernel_size=kernel_size, A=True,
                          bias=True),
-            nn.Sigmoid(),
+            nn.ReLU(),
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=True,
                          bias=True),
-            nn.Sigmoid(),
+            nn.ReLU(),
             CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=True, bias=True),
             nn.Sigmoid()
         )
