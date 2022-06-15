@@ -61,7 +61,8 @@ class WaveNIST(pl.LightningModule):
 
         for t in range(self.output_size):
             p = self.forward(generated).squeeze()
-            generated[:, 0, t] = p[:, 0]
+            p_sample = torch.bernoulli(p)
+            generated[:, 0, t] = p_sample[:, 0]
 
         return torch.bernoulli(generated.squeeze())
 
