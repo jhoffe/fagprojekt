@@ -5,3 +5,4 @@ models/*.pt
 results/*.csv
 data/
 *.png
+analysis/
