@@ -1,7 +1,7 @@
 #!/bin/sh
-#BSUB -J train_wavenist_dgm
-#BSUB -o batch_jobs/logs/train_wavenist_dgm_%J.out
-#BSUB -e batch_jobs/logs/train_wavenist_dgm_%J.err
+#BSUB -J train_wavenist_v5
+#BSUB -o batch_jobs/logs/train_wavenist_v5_%J.out
+#BSUB -e batch_jobs/logs/train_wavenist_v5_%J.err
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 12
