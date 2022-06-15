@@ -110,8 +110,8 @@ input_transforms = transforms.Compose([transforms.ToTensor(), transforms.Lambda(
 train_set = datasets.MNIST(root="MNIST", download=True, train=True, transform=input_transforms)
 val_set = datasets.MNIST(root="MNIST", download=True, train=False, transform=input_transforms)
 
-train_loader = DataLoader(train_set, batch_size=8, num_workers=4, shuffle=True)
-val_loader = DataLoader(val_set, batch_size=8, num_workers=4)
+train_loader = DataLoader(train_set, batch_size=64, num_workers=4, shuffle=True)
+val_loader = DataLoader(val_set, batch_size=64, num_workers=4)
 
 pl.seed_everything(42, workers=True)
 
