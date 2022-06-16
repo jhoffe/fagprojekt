@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from pytorch_lightning.callbacks import RichModelSummary, RichProgressBar
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
 from torch.nn import BCELoss
 from torch.utils.data import DataLoader
-from torchinfo import summary
 from torchvision import transforms, datasets
-from pytorch_lightning.callbacks import EarlyStopping, RichModelSummary, RichProgressBar, ModelCheckpoint
 
 
 class CausalConv1d(nn.Module):
@@ -36,7 +36,7 @@ EPS = 1.e-5
 
 
 class WaveNIST(pl.LightningModule):
-    def __init__(self, hidden=512, kernel_size=7, output_size=784):
+    def __init__(self, hidden=256, kernel_size=17, output_size=784):
         super(WaveNIST, self).__init__()
         self.output_size = output_size
 
@@ -50,7 +50,10 @@ class WaveNIST(pl.LightningModule):
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=False,
                          bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=False, bias=True),
+            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=8, kernel_size=kernel_size, A=False,
+                         bias=True),
+            nn.ReLU(),
+            CausalConv1d(in_channels=hidden, out_channels=1, dilation=16, kernel_size=kernel_size, A=False, bias=True),
             nn.Sigmoid()
         ])
 
@@ -61,16 +64,10 @@ class WaveNIST(pl.LightningModule):
         return x
 
     @torch.no_grad()
-    def generate(self, batch_size, init_input=None):
-        if init_input is not None:
-            assert init_input.size(0) == batch_size
-            assert init_input.size(1) == 1
-            assert init_input.size(2) < self.output_size
-            generated = F.pad(init_input, (0, self.output_size - init_input.size(2)), mode="constant").to(self.device)
-        else:
-            generated = torch.zeros((batch_size, 1, self.output_size), device=self.device)
+    def generate(self, batch_size):
+        generated = torch.zeros((batch_size, 1, self.output_size), device=self.device)
 
-        for t in range(init_input.size(2) if init_input is not None else 0, self.output_size):
+        for t in range(self.output_size):
             p = self.forward(generated).squeeze()
             p_sample = torch.bernoulli(p)
             generated[:, 0, t] = p_sample[:, t]
@@ -128,22 +125,13 @@ pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(hidden=512, kernel_size=7)
+model = WaveNIST(hidden=256, kernel_size=7)
 
-summary(model, (64, 1, 784), col_names=[
-    "input_size",
-    "output_size",
-    "num_params",
-    "kernel_size"
-])
-
-model_checkpoint = ModelCheckpoint(dirpath="models/finals/", save_top_k=1, monitor="val_loss")
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
                      logger=logger,
                      callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=15), RichProgressBar(),
-                                RichModelSummary(), model_checkpoint],
-                     default_root_dir="models/final/")
+                                RichModelSummary()],
+                     default_root_dir="models/")
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
-print(f"{model_checkpoint.best_model_path} with score {model_checkpoint.best_model_score}")

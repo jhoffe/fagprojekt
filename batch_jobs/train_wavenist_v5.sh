@@ -28,4 +28,4 @@ source fagprojekt-env/bin/activate
 
 export WANDB_API_KEY="5403fe6e39e261a91fd0a604a0ea7e22c75927cf"
 
-python3 Mnist/WaveNIST_V5.py
+python3 WaveNIST/WaveNIST_V5.py
