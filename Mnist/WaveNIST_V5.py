@@ -50,10 +50,7 @@ class WaveNIST(pl.LightningModule):
             CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=4, kernel_size=kernel_size, A=False,
                          bias=True),
             nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=hidden, dilation=8, kernel_size=kernel_size, A=False,
-                         bias=True),
-            nn.ReLU(),
-            CausalConv1d(in_channels=hidden, out_channels=1, dilation=16, kernel_size=kernel_size, A=False, bias=True),
+            CausalConv1d(in_channels=hidden, out_channels=1, dilation=8, kernel_size=kernel_size, A=False, bias=True),
             nn.Sigmoid()
         ])
 
