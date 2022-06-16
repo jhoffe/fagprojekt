@@ -36,7 +36,7 @@ EPS = 1.e-5
 
 
 class WaveNIST(pl.LightningModule):
-    def __init__(self, hidden=256, kernel_size=17, output_size=784):
+    def __init__(self, hidden=512, kernel_size=7, output_size=784):
         super(WaveNIST, self).__init__()
         self.output_size = output_size
 
@@ -125,7 +125,7 @@ pl.seed_everything(42, workers=True)
 
 logger = WandbLogger(project="wavenist")
 
-model = WaveNIST(hidden=256, kernel_size=7)
+model = WaveNIST(hidden=512, kernel_size=7)
 
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
