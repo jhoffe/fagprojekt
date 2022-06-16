@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from pytorch_lightning.callbacks import RichModelSummary, RichProgressBar
+from pytorch_lightning.callbacks import EarlyStopping, RichModelSummary, RichProgressBar, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch import nn
@@ -127,11 +127,13 @@ logger = WandbLogger(project="wavenist")
 
 model = WaveNIST(hidden=512, kernel_size=7)
 
+model_checkpoint = ModelCheckpoint(dirpath="models/finals/", save_top_k=1, monitor="val_loss")
 trainer = pl.Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu",
                      devices=-1 if torch.cuda.is_available() else None, max_epochs=100,
                      logger=logger,
                      callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=15), RichProgressBar(),
-                                RichModelSummary()],
+                                RichModelSummary(), model_checkpoint],
                      default_root_dir="models/")
 
 trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+print(f"{model_checkpoint.best_model_path} with score {model_checkpoint.best_model_score}")
